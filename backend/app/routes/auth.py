@@ -100,7 +100,7 @@ def me():
     Requires: Authorization: Bearer <token>
     Returns: { "user": { ... } }
     """
-    user = User.query.get(get_jwt_identity())
+    user = db.session.get(User, get_jwt_identity())
     if not user:
         return jsonify({"error": "User not found"}), 404
 

@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest
+
+      - name: Check migrations apply cleanly
+        env:
+          DATABASE_URL: sqlite:///ci.db
+          JWT_SECRET_KEY: ci-secret-not-used-for-anything-real
+        run: flask db upgrade
+        working-directory: backend
+
+      - name: Check models match migrations
+        env:
+          DATABASE_URL: sqlite:///ci.db
+          JWT_SECRET_KEY: ci-secret-not-used-for-anything-real
+        # Alembic only writes a revision file when it finds a difference, so
+        # the file existing at all means a model change was left unmigrated.
+        run: |
+          flask db migrate -m "ci drift check" --rev-id ci_drift_check
+          if ls migrations/versions/ci_drift_check_*.py >/dev/null 2>&1; then
+            echo "::error::Models have changed without a migration. Run: flask db migrate"
+            cat migrations/versions/ci_drift_check_*.py
+            exit 1
+          fi
+        working-directory: backend
+
+  frontend:
+    name: Frontend lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
