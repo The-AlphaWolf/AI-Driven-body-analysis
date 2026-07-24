@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import AnalysisReport from '../components/AnalysisReport';
+import { SkeletonResults } from '../components/Skeleton';
 import api from '../services/api';
 
 /**
@@ -35,13 +36,7 @@ export default function SharedResultsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <div className="spinner" />
-      </div>
-    );
-  }
+  if (loading) return <SkeletonResults />;
 
   if (error || !analysis) {
     return (
