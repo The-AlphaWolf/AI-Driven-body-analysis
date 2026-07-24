@@ -2,6 +2,11 @@
 
 > AI-powered fashion recommendations based on your unique face shape, skin tone, and body proportions.
 
+**[Live demo →](https://stylesense-ai-three.vercel.app)** · [API health](https://stylesense-api.onrender.com/api/health)
+
+> The API runs on a free instance that sleeps after 15 minutes. The first
+> request may take ~50s to wake it, and analysis is slow on a tenth of a CPU.
+
 [![CI](https://github.com/The-AlphaWolf/AI-Driven-body-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/The-AlphaWolf/AI-Driven-body-analysis/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.x-green.svg)](https://flask.palletsprojects.com)
