@@ -2,9 +2,10 @@
 
 > AI-powered fashion recommendations based on your unique face shape, skin tone, and body proportions.
 
+[![CI](https://github.com/The-AlphaWolf/AI-Driven-body-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/The-AlphaWolf/AI-Driven-body-analysis/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.x-green.svg)](https://flask.palletsprojects.com)
-[![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://react.dev)
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://postgresql.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -12,12 +13,18 @@
 
 ## 📋 Overview
 
-StyleSense AI analyzes uploaded photos using computer vision to detect:
-- **Face Shape** — Oval, round, square, heart, oblong, or diamond classification using MediaPipe Face Mesh landmark geometry
-- **Skin Tone** — Depth (fair → deep) and undertone (warm/cool/neutral) via k-means clustering in LAB color space
-- **Body Proportions** — Hourglass, pear, apple, rectangle, or inverted triangle classification using MediaPipe Pose
+StyleSense AI analyses uploaded photos using computer vision to detect:
 
-These attributes feed into a **weighted recommendation engine** that generates personalized styling advice across clothing silhouettes, necklines, color palettes, patterns, accessories, and hairstyles — each with an explanation of *why* it suits your features.
+- **Face shape** — oval, round, square, heart, oblong or diamond, from MediaPipe Face Mesh landmark geometry
+- **Skin tone** — depth (fair → deep) and undertone (warm/cool/neutral), via k-means clustering in LAB colour space
+- **Body proportions** — hourglass, pear, apple, rectangle or inverted triangle, from MediaPipe Pose
+
+Those attributes feed a **weighted recommendation engine** that produces styling
+advice across silhouettes, necklines, colour palettes, patterns, accessories and
+hairstyles — each with an explanation of *why* it suits you.
+
+You can keep or reject each suggestion, collect the ones you liked, export the
+whole thing as a PDF, and share a read-only link that omits your photo.
 
 ---
 
@@ -27,29 +34,30 @@ These attributes feed into a **weighted recommendation engine** that generates p
 ┌─────────────────────────────────────────────────────────────┐
 │                        Frontend                              │
 │              React + Vite + TailwindCSS v4                   │
-│         (Landing, Auth, Upload, Results, Dashboard)          │
-│                    Deployed to Vercel                         │
+│    (Landing, Auth, Upload, Results, Dashboard, Saved,        │
+│                  Public share pages)                         │
+│                    Deployed to Vercel                        │
 └──────────────────────┬──────────────────────────────────────┘
-                       │ REST API (JSON + Multipart)
-                       │ JWT Auth Header
+                       │ REST (JSON + multipart), JWT in header
 ┌──────────────────────▼──────────────────────────────────────┐
 │                        Backend                               │
-│                   Python Flask API                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────┐ │
-│  │   Auth   │  │   Face   │  │   Skin   │  │    Body     │ │
-│  │  Routes  │  │ Analysis │  │ Analysis │  │  Analysis   │ │
-│  └──────────┘  └──────────┘  └──────────┘  └─────────────┘ │
-│                ┌──────────────────────────┐                   │
-│                │  Recommendation Engine   │                   │
-│                │  (Weighted Scoring)      │                   │
-│                └──────────────────────────┘                   │
-│                    Deployed to Render                         │
+│                    Python Flask API                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────┐  │
+│  │   Auth   │  │   Face   │  │   Skin   │  │    Body     │  │
+│  │  Routes  │  │ Analysis │  │ Analysis │  │  Analysis   │  │
+│  └──────────┘  └──────────┘  └──────────┘  └─────────────┘  │
+│  ┌──────────────────────┐  ┌───────────┐  ┌──────────────┐  │
+│  │ Recommendation Engine│  │  Feedback │  │ PDF + Share  │  │
+│  │  (weighted scoring)  │  │   Loop    │  │              │  │
+│  └──────────────────────┘  └───────────┘  └──────────────┘  │
+│           Docker container on Hugging Face Spaces            │
 └──────────────────────┬──────────────────────────────────────┘
                        │
           ┌────────────▼────────────┐
           │      PostgreSQL         │
-          │  (Users + Analyses)     │
-          │  Render / Neon / Local  │
+          │  Users · Analyses ·     │
+          │  Feedback · Blocklist   │
+          │        (Neon)           │
           └─────────────────────────┘
 ```
 
@@ -59,14 +67,33 @@ These attributes feed into a **weighted recommendation engine** that generates p
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| **Frontend** | React 18 + Vite | Fast HMR, modern build tooling |
+| **Frontend** | React 19 + Vite | Fast HMR, modern build tooling |
 | **Styling** | TailwindCSS v4 | Utility-first, rapid UI development |
 | **Backend** | Flask 3.x | Lightweight, flexible Python API framework |
-| **ORM** | SQLAlchemy + Flask-Migrate | Type-safe models, auto-generated migrations |
+| **ORM** | SQLAlchemy + Flask-Migrate | Typed models, generated migrations |
 | **Database** | PostgreSQL | Relational integrity, JSON columns, free cloud tiers |
-| **Auth** | JWT (Flask-JWT-Extended) | Stateless, token-based authentication |
-| **Computer Vision** | OpenCV + MediaPipe | Face mesh (478 landmarks), pose estimation — all local, no paid APIs |
-| **ML** | scikit-learn (k-means) | Skin tone clustering in LAB color space |
+| **Auth** | JWT (Flask-JWT-Extended) | Stateless tokens, database-backed revocation |
+| **Computer vision** | OpenCV + MediaPipe | Face mesh (478 landmarks), pose estimation — all local, no paid APIs |
+| **ML** | scikit-learn (k-means) | Skin tone clustering in LAB colour space |
+| **PDF** | ReportLab | No headless browser, no system libraries |
+
+---
+
+## ✨ Features
+
+- **Analyse a face photo, a body photo, or both.** Each is optional; the engine adapts to whatever it can detect.
+- **Confidence scores** on every detection, with a warning when lighting makes the skin reading unreliable.
+- **Explained recommendations** — every suggestion carries the reasons it was chosen for you.
+- **Keep or reject** any suggestion. Liked items collect on a Saved page.
+- **PDF export** — a printable report you can take shopping.
+- **Revocable share links** that expose the advice but not your photo.
+- **History** of every analysis, with thumbnails.
+
+### On your photos
+
+Uploaded images are decoded in memory and **never written to disk**. Only a
+200×200 thumbnail is kept, stored in the database, and served exclusively to
+the account that created it. A share link does not include it.
 
 ---
 
@@ -75,9 +102,10 @@ These attributes feed into a **weighted recommendation engine** that generates p
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- PostgreSQL 15+
+- PostgreSQL 15+ (or nothing — it falls back to SQLite locally)
 
-### Backend Setup
+### Backend
+
 ```bash
 cd backend
 python -m venv venv
@@ -86,49 +114,65 @@ venv\Scripts\activate        # Windows
 
 pip install -r requirements.txt
 
-# Create database
-psql -U postgres -c "CREATE DATABASE stylesense;"
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your DATABASE_URL and JWT_SECRET_KEY
-
-# Run migrations
+cp .env.example .env         # then edit it
 flask db upgrade
+python seed_demo.py          # optional sample data
 
-# Start dev server
-flask run --debug
+flask run --port 5000
 ```
 
-### Frontend Setup
+The seed script creates `demo@stylesense.ai` / `demo1234` with five example
+analyses, so you can look at a populated dashboard without uploading anything.
+
+### Frontend
+
 ```bash
 cd frontend
 npm install
+cp .env.example .env.local   # defaults to http://localhost:5000
 npm run dev
+```
+
+### Tests
+
+```bash
+cd backend && pytest         # 149 tests, ~20s
+cd frontend && npm run lint && npm run build
 ```
 
 ---
 
-## 📸 Screenshots
+## 🌍 Deployment
 
-> _Screenshots will be added after the UI is complete._
+See **[DEPLOY.md](DEPLOY.md)** for the full walkthrough — Neon for Postgres,
+a Docker Space on Hugging Face for the API, Vercel for the frontend.
+
+The backend cannot run on Vercel's serverless functions: MediaPipe, OpenCV,
+scikit-learn and NumPy unzip to roughly 250MB, which is the hard limit for a
+function bundle. It needs a container host.
 
 ---
 
 ## 🔮 Future Improvements
 
-### Upgrading the Recommendation Engine to a Trained Model
+### Upgrading the recommendation engine to a trained model
 
-The current recommendation engine uses a **weighted feature-vector scoring algorithm** that matches user attributes against a structured rules dataset. This architecture was intentionally designed to be **model-ready**:
+The engine currently scores a structured rules dataset against a standardised
+feature vector, which was a deliberate choice — it is the same shape a model
+would take.
 
-1. **Current**: Rules-based scoring with category-dependent weights
-2. **Next step**: Train a collaborative filtering or content-based model on user feedback (which recommendations they saved/liked)
-3. **Advanced**: Fine-tune a multimodal model that takes the raw image features (not just classifications) as input
+1. **Now**: weighted rules scoring with category-dependent weights, and hard
+   exclusion when a rule contradicts the attribute its category is about
+2. **Next**: train on the feedback the app now collects — which recommendations
+   real people kept and which they rejected, joined to the attributes that
+   produced them
+3. **Later**: a multimodal model taking raw image features rather than
+   classifications
 
-The scoring function in `recommendation.py` accepts a standardized feature vector, making it a drop-in replacement to swap the rules engine for a trained classifier.
+The `feedback` table exists to make step 2 possible; it is the dataset.
 
 ---
 
 ## 📄 License
 
-MIT
+MIT — see [LICENSE](LICENSE).
