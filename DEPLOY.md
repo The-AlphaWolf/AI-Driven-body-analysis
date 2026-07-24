@@ -5,22 +5,43 @@ frontend as a static site.
 
 | Piece | Host | Why |
 |---|---|---|
-| Database | Neon | Free tier, no card, survives redeploys |
-| Backend | Hugging Face Spaces (Docker) | 16GB RAM and no card; the CV dependencies unzip to ~250MB, which is over Vercel's serverless function limit |
+| Database | Neon | Free Postgres, no card, does not expire |
+| Backend | Render (Docker) | Free container host; measured footprint is 356MB against a 512MB limit |
 | Frontend | Vercel | Static build, global CDN |
+
+### Why not Hugging Face or Vercel for the backend
+
+Vercel's serverless functions cap a bundle at 250MB unzipped. MediaPipe,
+OpenCV, scikit-learn and NumPy exceed that on their own.
+
+Hugging Face Spaces was the original target, but free Spaces are static-only:
+*"hosting Gradio and Docker Spaces on free cpu-basic requires a PRO
+subscription."* If you have PRO, the Dockerfile works there unchanged — set
+`app_port: 7860` in the Space README frontmatter.
+
+### What the free Render plan costs you
+
+- **Sleeps after 15 minutes idle.** The next request waits ~50s for a cold
+  start, plus a few seconds for the landmarker models to load.
+- **~0.1 CPU.** A single analysis takes tens of seconds rather than the two
+  or three it takes on a real core.
+
+Fine for a demo. Upgrade the instance type if it becomes something people
+actually use.
 
 ---
 
-## 1. Database
+## 1. Database — Neon
 
-Create a Postgres database on [Neon](https://neon.tech) and copy the pooled
-connection string. It looks like:
+1. Sign up at [neon.tech](https://neon.tech) (GitHub login, no card)
+2. Create a project; a database comes with it
+3. Copy the **pooled** connection string:
 
 ```
 postgresql://user:password@ep-something-pooler.region.aws.neon.tech/dbname?sslmode=require
 ```
 
-Nothing else to do — the backend runs its migrations at boot.
+Nothing else to do — the backend runs its own migrations at boot.
 
 > The app rejects a SQLite URL when `FLASK_ENV=production`. On a host with an
 > ephemeral filesystem, SQLite loses every account on each restart, so this
@@ -28,56 +49,43 @@ Nothing else to do — the backend runs its migrations at boot.
 
 ---
 
-## 2. Backend — Hugging Face Space
+## 2. Backend — Render
 
-### Create the Space
+### Create the service
 
-1. [New Space](https://huggingface.co/new-space)
-2. **SDK: Docker**, blank template
-3. Visibility: public or private, either works
+1. Sign up at [render.com](https://render.com) with GitHub
+2. **New → Blueprint**, pick this repository
+3. Render reads [`render.yaml`](render.yaml) and proposes `stylesense-api`
+4. Apply
 
-### Add the secrets
+The blueprint sets the Docker runtime, the free plan, `/api/health` as the
+health check, and generates `JWT_SECRET_KEY` for you — nobody has to invent
+or handle that value.
 
-**Settings → Variables and secrets → New secret:**
+### Fill in the two secrets
 
-| Name | Value |
+**Dashboard → stylesense-api → Environment:**
+
+| Key | Value |
 |---|---|
-| `DATABASE_URL` | The Neon connection string |
-| `JWT_SECRET_KEY` | `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
-| `CORS_ORIGINS` | Your Vercel URL, e.g. `https://stylesense.vercel.app` |
+| `DATABASE_URL` | The Neon pooled connection string |
+| `CORS_ORIGINS` | Your Vercel URL, e.g. `https://stylesense-ai.vercel.app` |
 
-Set these **before** the first build. The container refuses to start in
-production with the development JWT secret — a shipped default means anyone
-who has read the repo can mint a token for any account.
-
-`CORS_ORIGINS` takes a comma-separated list. Include every origin the
+Both are marked `sync: false` in the blueprint so they never live in git.
+`CORS_ORIGINS` takes a comma-separated list — include every origin the
 frontend is served from, including preview deployments if you use them.
 
-### Push the code
-
-A Space is its own git repo and needs a README carrying Space frontmatter at
-its root, which this repo's README cannot also be. So the sync script
-assembles what a Space needs and pushes that:
-
-```bash
-HF_TOKEN=hf_your_write_token ./deploy/huggingface/sync.sh your-username/your-space
-```
-
-Create the token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-with **write** access.
-
-To do it automatically on every push to `master`, add `HF_TOKEN` and
-`HF_SPACE` as repository secrets and the included
-[`deploy-space.yml`](.github/workflows/deploy-space.yml) workflow handles it.
+You will not know the Vercel URL until step 3, so set a placeholder now and
+come back.
 
 ### Verify
 
 ```bash
-curl https://your-username-your-space.hf.space/api/health
+curl https://stylesense-api.onrender.com/api/health
 ```
 
 Expect `{"service":"StyleSense AI API","status":"healthy"}`. The first
-request after a build is slow — the landmarker models load lazily.
+request after a deploy or a sleep is slow.
 
 ---
 
@@ -91,20 +99,21 @@ request after a build is slow — the landmarker models load lazily.
 
    | Name | Value |
    |---|---|
-   | `VITE_API_URL` | `https://your-username-your-space.hf.space` |
+   | `VITE_API_URL` | `https://stylesense-api.onrender.com` |
 
    No trailing slash. It is baked in at build time, so changing it later
    needs a redeploy, not just a restart.
 
 5. Deploy
 
-`vercel.json` handles the SPA rewrites — without them a refresh on
+`frontend/vercel.json` handles the SPA rewrites — without them a refresh on
 `/dashboard` or a shared `/s/<token>` link 404s.
 
 ### Close the loop
 
-Set `CORS_ORIGINS` on the Space to the Vercel URL Vercel just gave you, then
-restart the Space. Until you do, every API call from the browser fails CORS.
+Set `CORS_ORIGINS` on Render to the URL Vercel just gave you. Render restarts
+on an environment change. Until you do this, every API call from the browser
+fails CORS.
 
 ---
 
@@ -149,21 +158,23 @@ docker run -p 7860:7860 \
 **`OSError: libGLESv2.so.2: cannot open shared object file`**
 MediaPipe's C bindings dlopen GLES and EGL even for CPU-only inference. The
 Dockerfile installs `libgles2` and `libegl1` for this. If you slim the image
-down, keep them — the container will build and serve fine and then fail on
-the first analysis request.
+down, keep them — the container will build, boot and serve health checks
+fine, then fail on the first analysis request.
 
-**Space starts, then every browser request fails**
-`CORS_ORIGINS` does not include the frontend's origin. Check the exact
-scheme and host, and note that a Vercel preview URL differs from production.
+**Service starts, then every browser request fails**
+`CORS_ORIGINS` does not include the frontend's origin. Check the exact scheme
+and host, and note that a Vercel preview URL differs from production.
 
 **`RuntimeError: JWT_SECRET_KEY is still the development default`**
-Working as intended. Set the secret.
+Working as intended. On Render the blueprint generates one; if you created
+the service by hand instead, add it.
 
-**First analysis takes 10–30 seconds**
-The landmarker models load on the first request that needs them. Subsequent
-requests reuse them. A Space that has gone to sleep pays this again.
+**First request takes a minute**
+Free-plan cold start plus the lazy model load. Subsequent requests reuse both.
 
-**Migrations did not run**
-They run in the container's start command. If `DATABASE_URL` is wrong the
-container exits during `flask db upgrade` — check the Space's build and
-container logs.
+**Analysis is very slow but succeeds**
+~0.1 CPU on the free plan. Upgrade the instance type.
+
+**Deploy succeeds but the service restarts in a loop**
+Migrations run in the start command, so a bad `DATABASE_URL` exits the
+container. Check the Render logs for the `flask db upgrade` output.

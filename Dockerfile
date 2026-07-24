@@ -1,7 +1,8 @@
-# StyleSense AI backend — Hugging Face Spaces (Docker SDK)
+# StyleSense AI backend — container image
 #
-# Spaces expects the app on port 7860 and runs the container as a non-root
-# user with UID 1000. Everything below follows from those two constraints.
+# Deployed to Render (see render.yaml), and portable to any container host:
+# the server binds $PORT, which Render injects, falling back to 7860 for
+# local runs. Runs as a non-root UID 1000 user.
 FROM python:3.12-slim
 
 # MediaPipe's C bindings dlopen libGLESv2 and libEGL even for CPU-only
@@ -40,7 +41,7 @@ ENV FLASK_APP=wsgi.py \
 EXPOSE 7860
 
 # Migrations run at boot rather than in the build: the build has no access
-# to DATABASE_URL, and Spaces has no release phase to hang them off.
+# to DATABASE_URL, and the free plan has no release phase to hang them off.
 #
 # One worker with threads, not multiple processes. Each worker would hold
 # its own copy of the ~13MB of landmarker models plus the TFLite runtime,
