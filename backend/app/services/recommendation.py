@@ -46,6 +46,43 @@ CATEGORY_WEIGHTS = {
 # Default weights if category not in the map
 DEFAULT_WEIGHTS = {"face": 0.33, "body": 0.34, "skin": 0.33}
 
+# Within the skin dimension, undertone is the more discriminating signal.
+UNDERTONE_SHARE = 0.6
+DEPTH_SHARE = 0.4
+
+
+def _primary_dimension(weights: dict) -> str:
+    """The attribute a category's advice is really about."""
+    return max(weights, key=weights.get)
+
+
+def _contradictions(
+    rule: dict,
+    face_shape: str | None,
+    skin_depth: str | None,
+    skin_undertone: str | None,
+    body_shape: str | None,
+) -> dict[str, bool]:
+    """
+    Which of the user's known attributes this rule explicitly excludes.
+
+    A rule that lists applicable values and does not include the user's is
+    not merely a weak match — it is advice written for somebody else. This
+    is distinct from a rule that stays silent on a dimension, which applies
+    to everyone.
+    """
+    skin_tones = rule.get("applicable_skin_tones") or {}
+
+    def excluded(value, allowed) -> bool:
+        return bool(value and allowed and value not in allowed)
+
+    return {
+        "face": excluded(face_shape, rule.get("applicable_face_shapes")),
+        "body": excluded(body_shape, rule.get("applicable_body_shapes")),
+        "undertone": excluded(skin_undertone, skin_tones.get("undertone")),
+        "depth": excluded(skin_depth, skin_tones.get("depth")),
+    }
+
 
 def _score_rule(
     rule: dict,
@@ -71,6 +108,24 @@ def _score_rule(
     """
     category = rule.get("category", "")
     weights = CATEGORY_WEIGHTS.get(category, DEFAULT_WEIGHTS)
+
+    # ── Contradictions ─────────────────────────────────────────────────
+    # A rule that explicitly excludes the user's attribute is not a weak
+    # match, it is wrong. Colour advice reading "exceptionally elegant on
+    # deeper complexions" was being shown to medium-skinned users because a
+    # depth mismatch merely failed to add points instead of costing any.
+    contradicts = _contradictions(
+        rule, face_shape, skin_depth, skin_undertone, body_shape
+    )
+    primary = _primary_dimension(weights)
+
+    primary_contradicted = (
+        contradicts["undertone"] or contradicts["depth"]
+        if primary == "skin"
+        else contradicts[primary]
+    )
+    if primary_contradicted:
+        return 0.0
 
     # ── Face shape match ───────────────────────────────────────────────
     face_score = 0.0
@@ -106,7 +161,7 @@ def _score_rule(
                 depth_match = 1.0
 
         # Undertone is more discriminating than depth for color recommendations
-        skin_score = undertone_match * 0.6 + depth_match * 0.4
+        skin_score = undertone_match * UNDERTONE_SHARE + depth_match * DEPTH_SHARE
     else:
         skin_score = 0.5  # No skin data — neutral
 
@@ -120,6 +175,18 @@ def _score_rule(
 
     # Apply the rule's own weight (editorial quality/importance weight)
     total *= rule.get("weight", 1.0)
+
+    # ── Secondary contradictions ───────────────────────────────────────
+    # Not disqualifying the way a primary one is, but the rule must rank
+    # below anything that does not contradict the user at all.
+    for dimension, share in (
+        ("face", weights["face"]),
+        ("body", weights["body"]),
+        ("undertone", weights["skin"] * UNDERTONE_SHARE),
+        ("depth", weights["skin"] * DEPTH_SHARE),
+    ):
+        if contradicts[dimension]:
+            total *= 1.0 - share
 
     return total
 
