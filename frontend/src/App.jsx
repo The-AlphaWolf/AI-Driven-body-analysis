@@ -10,6 +10,7 @@ import AnalyzePage from './pages/AnalyzePage';
 import ResultsPage from './pages/ResultsPage';
 import DashboardPage from './pages/DashboardPage';
 import SavedPage from './pages/SavedPage';
+import SharedResultsPage from './pages/SharedResultsPage';
 
 export default function App() {
   return (
@@ -22,6 +23,8 @@ export default function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              {/* Public — anyone holding a share token, no account needed. */}
+              <Route path="/s/:token" element={<SharedResultsPage />} />
               <Route path="/analyze" element={
                 <ProtectedRoute><AnalyzePage /></ProtectedRoute>
               } />

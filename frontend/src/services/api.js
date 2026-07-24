@@ -112,6 +112,47 @@ class ApiClient {
     return this._request('DELETE', `/api/history/${id}`);
   }
 
+  // ── Sharing and reports ───────────────────────────────────────────
+  async enableSharing(analysisId) {
+    return this._request('POST', `/api/history/${analysisId}/share`);
+  }
+
+  async disableSharing(analysisId) {
+    return this._request('DELETE', `/api/history/${analysisId}/share`);
+  }
+
+  /** Read a publicly shared analysis. No auth — the token is the key. */
+  async getSharedAnalysis(token) {
+    return this._request('GET', `/api/public/${token}`);
+  }
+
+  /**
+   * Trigger a PDF download.
+   *
+   * Fetched as a blob rather than navigated to, because the owner's copy
+   * needs an Authorization header that a plain link cannot carry.
+   */
+  async downloadReport(analysisId, { shareToken = null } = {}) {
+    const path = shareToken
+      ? `/api/public/${shareToken}/report.pdf`
+      : `/api/history/${analysisId}/report.pdf`;
+
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      headers: shareToken ? {} : this._headers(false),
+    });
+    if (!response.ok) throw new Error('Could not generate the report');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'stylesense-report.pdf';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   // ── Feedback ──────────────────────────────────────────────────────
   /**
    * Record a verdict on one recommendation.
