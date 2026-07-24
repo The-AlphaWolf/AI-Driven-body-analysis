@@ -25,10 +25,12 @@ def create_app(config_class=Config):
     from app.routes.auth import auth_bp
     from app.routes.analysis import analysis_bp
     from app.routes.history import history_bp
+    from app.routes.feedback import feedback_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(analysis_bp, url_prefix="/api/analysis")
     app.register_blueprint(history_bp, url_prefix="/api/history")
+    app.register_blueprint(feedback_bp, url_prefix="/api/feedback")
 
     # ── JWT blocklist check ────────────────────────────────────────────
     from app.utils.auth_utils import is_token_revoked

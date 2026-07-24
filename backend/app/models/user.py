@@ -25,6 +25,9 @@ class User(db.Model):
     analyses = db.relationship(
         "Analysis", backref="user", lazy="dynamic", cascade="all, delete-orphan"
     )
+    feedback = db.relationship(
+        "Feedback", backref="user", lazy="dynamic", cascade="all, delete-orphan"
+    )
 
     def set_password(self, password: str) -> None:
         """Hash and store a plaintext password."""

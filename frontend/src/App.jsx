@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import AnalyzePage from './pages/AnalyzePage';
 import ResultsPage from './pages/ResultsPage';
 import DashboardPage from './pages/DashboardPage';
+import SavedPage from './pages/SavedPage';
 
 export default function App() {
   return (
@@ -29,6 +30,9 @@ export default function App() {
               } />
               <Route path="/dashboard" element={
                 <ProtectedRoute><DashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/saved" element={
+                <ProtectedRoute><SavedPage /></ProtectedRoute>
               } />
             </Routes>
           </main>

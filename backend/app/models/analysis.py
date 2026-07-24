@@ -45,6 +45,17 @@ class Analysis(db.Model):
     # hosts with an ephemeral filesystem (Hugging Face Spaces, Render free).
     thumbnail = db.Column(db.LargeBinary, nullable=True)
 
+    # Deleting an analysis takes its feedback with it — a verdict on a
+    # recommendation is meaningless once the analysis that produced it is gone.
+    # The ORM does the cascade rather than delegating to the database:
+    # SQLite does not enforce ON DELETE without a per-connection pragma, so
+    # passive_deletes would silently orphan rows in development and tests.
+    # The FK still carries ON DELETE CASCADE as a backstop on Postgres.
+    feedback = db.relationship(
+        "Feedback", backref="analysis", lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
     @classmethod
     def get_by_user(cls, user_id: str, page: int = 1, per_page: int = 12):
         """Paginated list of analyses for a user, newest first."""
