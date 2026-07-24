@@ -1,5 +1,13 @@
 # Deploying StyleSense AI
 
+The current deployment:
+
+| Piece | URL |
+|---|---|
+| Frontend | https://stylesense-ai-three.vercel.app |
+| API | https://stylesense-api.onrender.com |
+| Database | Neon — `stylesense` database on the `neon-red-cave` project |
+
 Three pieces: a Postgres database, the backend as a Docker container, and the
 frontend as a static site.
 
@@ -105,6 +113,12 @@ request after a deploy or a sleep is slow.
    needs a redeploy, not just a restart.
 
 5. Deploy
+
+> **Check the domain Vercel actually gave you.** If the name is taken
+> globally it silently appends a suffix — this project asked for
+> `stylesense-ai` and got `stylesense-ai-three.vercel.app`, while
+> `stylesense-ai.vercel.app` serves a stranger's app. Read the domain off
+> the project Overview rather than assuming it.
 
 `frontend/vercel.json` handles the SPA rewrites — without them a refresh on
 `/dashboard` or a shared `/s/<token>` link 404s.
