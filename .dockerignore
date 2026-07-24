@@ -1,0 +1,21 @@
+# Keep the build context small — the MediaPipe wheels are large enough.
+frontend/
+.git/
+.github/
+.claude/
+
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/node_modules/
+
+**/instance/
+**/*.db
+**/.env
+**/.env.local
+
+backend/tests/
+docs/
+*.md
+!README.md
