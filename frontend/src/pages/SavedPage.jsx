@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
+import { SkeletonGrid } from '../components/Skeleton';
 import api from '../services/api';
 
 const CATEGORY_ICONS = {
@@ -53,8 +54,12 @@ export default function SavedPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <div className="spinner" />
+      <div className="container" style={{ padding: '48px 24px', maxWidth: '900px' }}>
+        <div style={{ marginBottom: '32px', maxWidth: '220px' }}>
+          <div className="skeleton skeleton-line" style={{ height: '28px', marginBottom: '10px' }} />
+          <div className="skeleton skeleton-line" style={{ width: '60%' }} />
+        </div>
+        <SkeletonGrid count={4} lines={2} minWidth="100%" />
       </div>
     );
   }

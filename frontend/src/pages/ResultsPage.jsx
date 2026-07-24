@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import AnalysisReport from '../components/AnalysisReport';
 import ShareControls from '../components/ShareControls';
+import { SkeletonResults } from '../components/Skeleton';
 import api from '../services/api';
 
 export default function ResultsPage() {
@@ -44,13 +45,7 @@ export default function ResultsPage() {
     });
   }, []);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <div className="spinner" />
-      </div>
-    );
-  }
+  if (loading) return <SkeletonResults />;
 
   if (!analysis) {
     return (
