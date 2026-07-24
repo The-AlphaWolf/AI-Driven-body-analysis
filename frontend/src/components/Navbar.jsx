@@ -65,6 +65,9 @@ export default function Navbar() {
               <Link to="/dashboard" className="btn btn-secondary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
                 Dashboard
               </Link>
+              <Link to="/saved" className="btn btn-secondary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
+                ❤️ Saved
+              </Link>
               <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
                 Logout
               </button>

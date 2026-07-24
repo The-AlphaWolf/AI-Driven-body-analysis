@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
+import FeedbackButtons from '../components/FeedbackButtons';
 import api from '../services/api';
+
+/** Feedback rows are keyed by category and recommendation text, not by id. */
+const feedbackKey = (category, recommendation) => `${category}::${recommendation}`;
 
 const CATEGORY_ICONS = {
   necklines: '👔',
@@ -25,6 +29,7 @@ export default function ResultsPage() {
   const location = useLocation();
   const [analysis, setAnalysis] = useState(location.state?.analysis || null);
   const [loading, setLoading] = useState(!analysis);
+  const [feedback, setFeedback] = useState({});
 
   useEffect(() => {
     if (!analysis && id) {
@@ -34,6 +39,26 @@ export default function ResultsPage() {
         .finally(() => setLoading(false));
     }
   }, [id, analysis]);
+
+  const analysisId = analysis?.id || id;
+
+  useEffect(() => {
+    if (!analysisId) return;
+    api.getFeedback(analysisId)
+      .then((data) => setFeedback(data.feedback || {}))
+      .catch(() => {
+        // Feedback is additive — the results are still worth showing without it.
+      });
+  }, [analysisId]);
+
+  const updateFeedback = useCallback((key, verdict) => {
+    setFeedback((current) => {
+      const next = { ...current };
+      if (verdict === null) delete next[key];
+      else next[key] = verdict;
+      return next;
+    });
+  }, []);
 
   if (loading) {
     return (
@@ -231,15 +256,29 @@ export default function ResultsPage() {
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: '16px',
               }}>
-                {recs.map((rec, i) => (
+                {recs.map((rec, i) => {
+                  const key = feedbackKey(rec.category, rec.recommendation);
+                  const verdict = feedback[key] || null;
+
+                  return (
                   <div key={i} className="glass-card" style={{
                     padding: '20px',
                     transition: 'transform 0.2s ease',
+                    opacity: verdict === 'dislike' ? 0.55 : 1,
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
                   >
-                    <h4 style={{ fontSize: '1rem', marginBottom: '8px' }}>{rec.recommendation}</h4>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <h4 style={{ fontSize: '1rem', flex: 1 }}>{rec.recommendation}</h4>
+                      <FeedbackButtons
+                        analysisId={analysisId}
+                        category={rec.category}
+                        recommendation={rec.recommendation}
+                        verdict={verdict}
+                        onChange={(next) => updateFeedback(key, next)}
+                      />
+                    </div>
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: 1.6, marginBottom: '12px' }}>
                       {rec.explanation}
                     </p>
@@ -253,7 +292,8 @@ export default function ResultsPage() {
                       ))}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

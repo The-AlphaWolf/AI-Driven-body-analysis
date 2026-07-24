@@ -112,6 +112,27 @@ class ApiClient {
     return this._request('DELETE', `/api/history/${id}`);
   }
 
+  // ── Feedback ──────────────────────────────────────────────────────
+  /**
+   * Record a verdict on one recommendation.
+   * Pass verdict = null to clear it (toggling a button off).
+   */
+  async setFeedback(analysisId, category, recommendation, verdict) {
+    return this._request('PUT', `/api/feedback/analysis/${analysisId}`, {
+      body: { category, recommendation, verdict },
+    });
+  }
+
+  /** All verdicts for one analysis, keyed by "category::recommendation". */
+  async getFeedback(analysisId) {
+    return this._request('GET', `/api/feedback/analysis/${analysisId}`);
+  }
+
+  /** Everything the user has liked, across every analysis. */
+  async getSaved(page = 1, perPage = 20) {
+    return this._request('GET', `/api/feedback/saved?page=${page}&per_page=${perPage}`);
+  }
+
   /**
    * Fetch an analysis thumbnail as an object URL.
    *
