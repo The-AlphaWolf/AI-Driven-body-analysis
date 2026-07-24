@@ -101,19 +101,15 @@ def preprocess_image(image_bytes: bytes) -> np.ndarray | None:
         return None
 
 
-def save_thumbnail(image: np.ndarray, folder: str, name: str) -> str | None:
+def make_thumbnail(image: np.ndarray) -> bytes | None:
     """
-    Create and save a 200×200 JPEG thumbnail.
+    Create a 200×200 centre-cropped JPEG thumbnail.
 
-    Args:
-        image: OpenCV BGR image
-        folder: Directory to save into
-        name: Base filename (without extension)
-
-    Returns the full path to the saved thumbnail, or None on failure.
+    Returns the encoded JPEG bytes (~8KB) for storage in the database, or
+    None on failure. Bytes rather than a file path because the app runs on
+    hosts with an ephemeral filesystem.
     """
     try:
-        os.makedirs(folder, exist_ok=True)
         h, w = image.shape[:2]
 
         # Center crop to square
@@ -125,9 +121,10 @@ def save_thumbnail(image: np.ndarray, folder: str, name: str) -> str | None:
         # Resize to 200×200
         thumbnail = cv2.resize(cropped, (200, 200), interpolation=cv2.INTER_AREA)
 
-        path = os.path.join(folder, f"{name}.jpg")
-        cv2.imwrite(path, thumbnail, [cv2.IMWRITE_JPEG_QUALITY, 85])
-        return path
+        ok, buffer = cv2.imencode(".jpg", thumbnail, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        if not ok:
+            return None
+        return buffer.tobytes()
 
     except Exception:
         return None

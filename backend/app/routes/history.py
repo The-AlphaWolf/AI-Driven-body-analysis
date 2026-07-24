@@ -1,8 +1,9 @@
 """
 History routes: list, view, and delete past analyses.
 """
-import os
-from flask import Blueprint, jsonify, request, send_file, current_app
+import io
+
+from flask import Blueprint, jsonify, request, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.extensions import db
@@ -66,13 +67,6 @@ def delete_analysis(analysis_id):
     if not analysis:
         return jsonify({"error": "Analysis not found"}), 404
 
-    # Clean up thumbnail file if it exists
-    if analysis.thumbnail_path and os.path.exists(analysis.thumbnail_path):
-        try:
-            os.remove(analysis.thumbnail_path)
-        except OSError:
-            pass  # Non-critical, continue with deletion
-
     db.session.delete(analysis)
     db.session.commit()
 
@@ -90,10 +84,13 @@ def get_thumbnail(analysis_id):
     user_id = get_jwt_identity()
     analysis = Analysis.get_by_id_and_user(analysis_id, user_id)
 
-    if not analysis or not analysis.thumbnail_path:
+    if not analysis or not analysis.thumbnail:
         return jsonify({"error": "Thumbnail not found"}), 404
 
-    if not os.path.exists(analysis.thumbnail_path):
-        return jsonify({"error": "Thumbnail file missing"}), 404
-
-    return send_file(analysis.thumbnail_path, mimetype="image/jpeg")
+    response = send_file(
+        io.BytesIO(analysis.thumbnail),
+        mimetype="image/jpeg",
+        download_name=f"{analysis.id}.jpg",
+    )
+    response.headers["Cache-Control"] = "private, max-age=86400"
+    return response
