@@ -1,7 +1,6 @@
 """
 Flask application factory.
 """
-import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -13,6 +12,7 @@ def create_app(config_class=Config):
     """Create and configure the Flask application."""
     app = Flask(__name__)
     app.config.from_object(config_class)
+    config_class.validate()
 
     # ── Initialize extensions ──────────────────────────────────────────
     db.init_app(app)
@@ -20,10 +20,6 @@ def create_app(config_class=Config):
     bcrypt.init_app(app)
     jwt.init_app(app)
     CORS(app, origins=app.config["CORS_ORIGINS"], supports_credentials=True)
-
-    # ── Ensure upload directories exist ────────────────────────────────
-    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    os.makedirs(app.config["THUMBNAIL_FOLDER"], exist_ok=True)
 
     # ── Register blueprints ────────────────────────────────────────────
     from app.routes.auth import auth_bp

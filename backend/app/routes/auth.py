@@ -1,6 +1,8 @@
 """
 Authentication routes: register, login, profile, logout.
 """
+from datetime import datetime, timezone
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
@@ -114,6 +116,7 @@ def logout():
     Requires: Authorization: Bearer <token>
     Returns: { "message": "Successfully logged out" }
     """
-    jti = get_jwt()["jti"]
-    revoke_token(jti)
+    claims = get_jwt()
+    expires_at = datetime.fromtimestamp(claims["exp"], tz=timezone.utc)
+    revoke_token(claims["jti"], expires_at)
     return jsonify({"message": "Successfully logged out"}), 200

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
+import Thumbnail from '../components/Thumbnail';
 import api from '../services/api';
 
 export default function DashboardPage() {
@@ -104,43 +105,49 @@ export default function DashboardPage() {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 <Link to={`/results/${a.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  {/* Date */}
-                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-dim)', marginBottom: '12px' }}>
-                    {new Date(a.created_at).toLocaleDateString('en-US', {
-                      month: 'short', day: 'numeric', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
-                  </p>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                    {a.thumbnail_url && <Thumbnail analysisId={a.id} size={64} />}
 
-                  {/* Badges */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                    {a.face_shape && (
-                      <span className="badge badge-primary" style={{ textTransform: 'capitalize' }}>
-                        👤 {a.face_shape}
-                      </span>
-                    )}
-                    {a.body_shape && (
-                      <span className="badge badge-accent" style={{ textTransform: 'capitalize' }}>
-                        📐 {a.body_shape.replace('_', ' ')}
-                      </span>
-                    )}
-                  </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      {/* Date */}
+                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-dim)', marginBottom: '12px' }}>
+                        {new Date(a.created_at).toLocaleDateString('en-US', {
+                          month: 'short', day: 'numeric', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit',
+                        })}
+                      </p>
 
-                  {/* Skin info */}
-                  {a.skin_depth && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        border: '1px solid var(--color-border)',
-                        background: 'var(--color-surface)',
-                      }} />
-                      <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', textTransform: 'capitalize' }}>
-                        {a.skin_depth} • {a.skin_undertone}
-                      </span>
+                      {/* Badges */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                        {a.face_shape && (
+                          <span className="badge badge-primary" style={{ textTransform: 'capitalize' }}>
+                            👤 {a.face_shape}
+                          </span>
+                        )}
+                        {a.body_shape && (
+                          <span className="badge badge-accent" style={{ textTransform: 'capitalize' }}>
+                            📐 {a.body_shape.replace('_', ' ')}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Skin info */}
+                      {a.skin_depth && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            border: '1px solid var(--color-border)',
+                            background: a.skin_hex_color || 'var(--color-surface)',
+                          }} />
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', textTransform: 'capitalize' }}>
+                            {a.skin_depth} • {a.skin_undertone}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </Link>
 
                 {/* Delete button */}

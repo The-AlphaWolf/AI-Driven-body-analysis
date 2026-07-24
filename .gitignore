@@ -51,3 +51,12 @@ htmlcov/
 *.db
 *.sqlite3
 migrations/versions/__pycache__/
+
+# Local database files
+*.db
+instance/
+
+# Test artefacts
+.pytest_cache/
+.coverage
+htmlcov/
