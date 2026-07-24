@@ -20,19 +20,8 @@ import cv2
 import numpy as np
 from sklearn.cluster import KMeans
 import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
-import os
 
-_model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'face_landmarker.task')
-_base_options = python.BaseOptions(model_asset_path=_model_path)
-_options = vision.FaceLandmarkerOptions(
-    base_options=_base_options,
-    output_face_blendshapes=False,
-    output_facial_transformation_matrixes=False,
-    num_faces=1
-)
-_face_landmarker = vision.FaceLandmarker.create_from_options(_options)
+from app.services.landmarkers import detect_face
 
 # ── Landmark indices for skin sampling regions ─────────────────────────────
 # These landmarks sit on actual skin, away from hair, eyes, mouth
@@ -170,7 +159,7 @@ def analyze_skin_tone(image: np.ndarray) -> dict | None:
     # ── Step 1: Detect face and get landmarks ──────────────────────────
     rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
-    results = _face_landmarker.detect(mp_image)
+    results = detect_face(mp_image)
 
     if not results.face_landmarks:
         return None

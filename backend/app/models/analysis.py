@@ -41,7 +41,9 @@ class Analysis(db.Model):
     recommendations = db.Column(db.JSON, nullable=True)
 
     # ── Thumbnail for history display ──────────────────────────────────
-    thumbnail_path = db.Column(db.String(500), nullable=True)
+    # Stored inline as JPEG bytes (~8KB) so history survives redeploys on
+    # hosts with an ephemeral filesystem (Hugging Face Spaces, Render free).
+    thumbnail = db.Column(db.LargeBinary, nullable=True)
 
     @classmethod
     def get_by_user(cls, user_id: str, page: int = 1, per_page: int = 12):
@@ -64,7 +66,8 @@ class Analysis(db.Model):
             "body_shape": self.body_shape,
             "skin_depth": self.skin_depth,
             "skin_undertone": self.skin_undertone,
-            "thumbnail_url": f"/api/history/{self.id}/thumbnail" if self.thumbnail_path else None,
+            "skin_hex_color": self.skin_hex_color,
+            "thumbnail_url": f"/api/history/{self.id}/thumbnail" if self.thumbnail else None,
         }
 
     def to_full_dict(self) -> dict:
@@ -88,7 +91,7 @@ class Analysis(db.Model):
                 "confidence": self.body_confidence,
             } if self.body_shape else None,
             "recommendations": self.recommendations,
-            "thumbnail_url": f"/api/history/{self.id}/thumbnail" if self.thumbnail_path else None,
+            "thumbnail_url": f"/api/history/{self.id}/thumbnail" if self.thumbnail else None,
         }
 
     def __repr__(self):

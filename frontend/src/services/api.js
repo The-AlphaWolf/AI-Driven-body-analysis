@@ -112,10 +112,20 @@ class ApiClient {
     return this._request('DELETE', `/api/history/${id}`);
   }
 
-  /** Get thumbnail URL for an analysis. */
-  getThumbnailUrl(analysisId) {
-    const token = this.getToken();
-    return `${this.baseUrl}/api/history/${analysisId}/thumbnail?token=${token}`;
+  /**
+   * Fetch an analysis thumbnail as an object URL.
+   *
+   * The endpoint reads the JWT from the Authorization header, so the image
+   * cannot be loaded by putting a token in a plain <img src>. Callers own
+   * the returned URL and must revokeObjectURL it on unmount.
+   */
+  async getThumbnailObjectUrl(analysisId) {
+    const response = await fetch(
+      `${this.baseUrl}/api/history/${analysisId}/thumbnail`,
+      { headers: this._headers(false) },
+    );
+    if (!response.ok) return null;
+    return URL.createObjectURL(await response.blob());
   }
 }
 
