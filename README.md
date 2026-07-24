@@ -50,7 +50,7 @@ whole thing as a PDF, and share a read-only link that omits your photo.
 │  │ Recommendation Engine│  │  Feedback │  │ PDF + Share  │  │
 │  │  (weighted scoring)  │  │   Loop    │  │              │  │
 │  └──────────────────────┘  └───────────┘  └──────────────┘  │
-│           Docker container on Hugging Face Spaces            │
+│              Docker container on Render                      │
 └──────────────────────┬──────────────────────────────────────┘
                        │
           ┌────────────▼────────────┐
@@ -145,11 +145,16 @@ cd frontend && npm run lint && npm run build
 ## 🌍 Deployment
 
 See **[DEPLOY.md](DEPLOY.md)** for the full walkthrough — Neon for Postgres,
-a Docker Space on Hugging Face for the API, Vercel for the frontend.
+a Docker service on Render for the API, Vercel for the frontend.
 
-The backend cannot run on Vercel's serverless functions: MediaPipe, OpenCV,
-scikit-learn and NumPy unzip to roughly 250MB, which is the hard limit for a
-function bundle. It needs a container host.
+The backend needs a container host. It cannot run on Vercel's serverless
+functions, where MediaPipe, OpenCV, scikit-learn and NumPy blow past the
+250MB bundle limit on their own; and free Hugging Face Spaces are static-only
+now, with Docker behind PRO. The image is a plain Dockerfile binding `$PORT`,
+so it moves to any container host without changes.
+
+Measured footprint: **158MB idle, 356MB peak** with both landmarker models
+loaded — comfortably inside Render's 512MB free plan.
 
 ---
 
