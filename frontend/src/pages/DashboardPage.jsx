@@ -1,19 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import Thumbnail from '../components/Thumbnail';
+import { SkeletonGrid } from '../components/Skeleton';
 import api from '../services/api';
 
 export default function DashboardPage() {
   const [analyses, setAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [deleting, setDeleting] = useState(null);
   const { addToast } = useToast();
 
-  const fetchHistory = async (p = 1) => {
+  const fetchHistory = useCallback(async (p = 1) => {
+    setLoading(true);
+    setError(null);
     try {
       const data = await api.getHistory(p);
       setAnalyses(data.analyses);
@@ -21,15 +25,17 @@ export default function DashboardPage() {
       setPage(data.page);
       setPages(data.pages);
     } catch (err) {
-      addToast('Failed to load history', 'error');
+      // A failed load leaves the page with nothing to show, so it gets an
+      // inline retry rather than a toast that vanishes.
+      setError(err.message || 'Failed to load your analyses');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [fetchHistory]);
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this analysis?')) return;
@@ -47,8 +53,27 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <div className="spinner" />
+      <div className="container" style={{ padding: '48px 24px' }}>
+        <div style={{ marginBottom: '32px', maxWidth: '260px' }}>
+          <div className="skeleton skeleton-line" style={{ height: '28px', marginBottom: '10px' }} />
+          <div className="skeleton skeleton-line" style={{ width: '50%' }} />
+        </div>
+        <SkeletonGrid count={6} lines={3} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container" style={{ padding: '48px 24px' }}>
+        <div className="glass-card fade-in" style={{ textAlign: 'center', padding: '60px 24px' }}>
+          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '16px' }}>⚠️</span>
+          <h2 style={{ fontSize: '1.3rem', marginBottom: '8px' }}>Could not load your analyses</h2>
+          <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>{error}</p>
+          <button type="button" onClick={() => fetchHistory(page)} className="btn btn-primary">
+            Try again
+          </button>
+        </div>
       </div>
     );
   }
@@ -65,7 +90,7 @@ export default function DashboardPage() {
             }}>Dashboard</span>
           </h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-            {total} analysis{total !== 1 ? 'es' : ''} saved
+            {total} {total === 1 ? 'analysis' : 'analyses'} saved
           </p>
         </div>
         <Link to="/analyze" className="btn btn-primary">✨ New Analysis</Link>
@@ -183,7 +208,7 @@ export default function DashboardPage() {
               {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
-                  onClick={() => { setLoading(true); fetchHistory(p); }}
+                  onClick={() => fetchHistory(p)}
                   className={p === page ? 'btn btn-primary' : 'btn btn-secondary'}
                   style={{ padding: '8px 16px', fontSize: '0.85rem', minWidth: '40px' }}
                 >

@@ -56,7 +56,7 @@ export default function Navbar() {
         </Link>
 
         {/* Navigation Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {user ? (
             <>
               <Link to="/analyze" className="btn btn-primary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
