@@ -1,6 +1,7 @@
 """
 Analysis model for storing style analysis results.
 """
+import secrets
 import uuid
 from datetime import datetime, timezone
 
@@ -40,6 +41,12 @@ class Analysis(db.Model):
     # ── Recommendations (flexible JSON payload) ────────────────────────
     recommendations = db.Column(db.JSON, nullable=True)
 
+    # ── Public sharing ─────────────────────────────────────────────────
+    # Null until the owner explicitly shares. Anyone holding the token can
+    # read the analysis, so it is a long random value, not a guessable id.
+    share_token = db.Column(db.String(43), nullable=True, unique=True, index=True)
+    shared_at = db.Column(db.DateTime, nullable=True)
+
     # ── Thumbnail for history display ──────────────────────────────────
     # Stored inline as JPEG bytes (~8KB) so history survives redeploys on
     # hosts with an ephemeral filesystem (Hugging Face Spaces, Render free).
@@ -68,6 +75,25 @@ class Analysis(db.Model):
         """Fetch a single analysis, enforcing ownership."""
         return cls.query.filter_by(id=analysis_id, user_id=user_id).first()
 
+    @classmethod
+    def get_by_share_token(cls, token: str):
+        """Fetch a publicly shared analysis. No ownership check by design."""
+        if not token:
+            return None
+        return cls.query.filter_by(share_token=token).first()
+
+    def enable_sharing(self) -> str:
+        """Mint a share token, or return the existing one."""
+        if not self.share_token:
+            self.share_token = secrets.token_urlsafe(32)
+            self.shared_at = datetime.now(timezone.utc)
+        return self.share_token
+
+    def disable_sharing(self) -> None:
+        """Revoke the share link. Any circulating URL stops working."""
+        self.share_token = None
+        self.shared_at = None
+
     def to_summary_dict(self) -> dict:
         """Compact representation for history list view."""
         return {
@@ -81,10 +107,17 @@ class Analysis(db.Model):
             "thumbnail_url": f"/api/history/{self.id}/thumbnail" if self.thumbnail else None,
         }
 
-    def to_full_dict(self) -> dict:
-        """Complete representation for detail view."""
-        return {
-            "id": self.id,
+    def to_full_dict(self, public: bool = False) -> dict:
+        """
+        Complete representation for detail view.
+
+        The public form is what a share link exposes. It deliberately omits
+        the photo and the internal id: a shared style report should not hand
+        a stranger the subject's face, and the id is the owner's handle for
+        routes that only ownership should reach.
+        """
+        payload = {
+            "id": None if public else self.id,
             "created_at": self.created_at.isoformat(),
             "face_analysis": {
                 "shape": self.face_shape,
@@ -102,8 +135,16 @@ class Analysis(db.Model):
                 "confidence": self.body_confidence,
             } if self.body_shape else None,
             "recommendations": self.recommendations,
-            "thumbnail_url": f"/api/history/{self.id}/thumbnail" if self.thumbnail else None,
         }
+
+        if not public:
+            payload["thumbnail_url"] = (
+                f"/api/history/{self.id}/thumbnail" if self.thumbnail else None
+            )
+            payload["share_token"] = self.share_token
+            payload["shared_at"] = self.shared_at.isoformat() if self.shared_at else None
+
+        return payload
 
     def __repr__(self):
         return f"<Analysis {self.id} user={self.user_id}>"

@@ -8,6 +8,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.extensions import db
 from app.models.analysis import Analysis
+from app.services.report import build_style_report, report_filename
 
 history_bp = Blueprint("history", __name__)
 
@@ -94,3 +95,64 @@ def get_thumbnail(analysis_id):
     )
     response.headers["Cache-Control"] = "private, max-age=86400"
     return response
+
+
+@history_bp.route("/<analysis_id>/report.pdf", methods=["GET"])
+@jwt_required()
+def download_report(analysis_id):
+    """Download an analysis as a printable PDF style report."""
+    user_id = get_jwt_identity()
+    analysis = Analysis.get_by_id_and_user(analysis_id, user_id)
+
+    if not analysis:
+        return jsonify({"error": "Analysis not found"}), 404
+
+    return send_file(
+        io.BytesIO(build_style_report(analysis)),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=report_filename(analysis),
+    )
+
+
+@history_bp.route("/<analysis_id>/share", methods=["POST"])
+@jwt_required()
+def enable_share(analysis_id):
+    """
+    Create a public link for an analysis.
+
+    Idempotent — calling it again returns the existing token rather than
+    invalidating a link the owner may have already sent to someone.
+
+    Returns: { "share_token": "...", "share_path": "/s/<token>" }
+    """
+    user_id = get_jwt_identity()
+    analysis = Analysis.get_by_id_and_user(analysis_id, user_id)
+
+    if not analysis:
+        return jsonify({"error": "Analysis not found"}), 404
+
+    token = analysis.enable_sharing()
+    db.session.commit()
+
+    return jsonify({
+        "share_token": token,
+        "share_path": f"/s/{token}",
+        "shared_at": analysis.shared_at.isoformat(),
+    }), 200
+
+
+@history_bp.route("/<analysis_id>/share", methods=["DELETE"])
+@jwt_required()
+def disable_share(analysis_id):
+    """Revoke the public link. Any URL already sent out stops working."""
+    user_id = get_jwt_identity()
+    analysis = Analysis.get_by_id_and_user(analysis_id, user_id)
+
+    if not analysis:
+        return jsonify({"error": "Analysis not found"}), 404
+
+    analysis.disable_sharing()
+    db.session.commit()
+
+    return jsonify({"message": "Sharing disabled"}), 200
