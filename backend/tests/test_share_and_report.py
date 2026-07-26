@@ -240,3 +240,56 @@ def test_report_escapes_markup_in_recommendation_text(app, user):
     db.session.commit()
 
     assert build_style_report(risky).startswith(b"%PDF-")
+
+
+# ── Colour swatches in the report ──────────────────────────────────────────
+# The report is meant to be printed and taken shopping, where "warm neutrals"
+# is not something you can hold up against a shirt.
+
+def test_palette_strip_draws_a_cell_per_swatch():
+    from reportlab.lib import colors
+
+    from app.services.report import _palette_strip
+
+    palette = [
+        {"name": "Terracotta", "hex": "#C1663F"},
+        {"name": "Camel", "hex": "#C19A6B"},
+        {"name": "Olive", "hex": "#6B7A4B"},
+    ]
+    strip = _palette_strip(palette)
+
+    # A swatch row and a row of hex codes beneath it.
+    assert len(strip._cellvalues) == 2
+    assert strip._cellvalues[1] == ["#C1663F", "#C19A6B", "#6B7A4B"]
+
+    backgrounds = [
+        cmd for cmd in strip._bkgrndcmds
+        if cmd[0] == "BACKGROUND" and cmd[1][1] == 0
+    ]
+    assert [cmd[3] for cmd in backgrounds] == [
+        colors.HexColor(s["hex"]) for s in palette
+    ]
+
+
+def test_palette_strip_is_omitted_without_swatches():
+    from app.services.report import _palette_strip
+
+    assert _palette_strip(None) is None
+    assert _palette_strip([]) is None
+    assert _palette_strip([{"name": "No hex"}]) is None
+
+
+def test_report_grows_when_a_recommendation_carries_a_palette(analysis):
+    """The swatches have to reach the page, not just the flowable."""
+    bare = build_style_report(analysis)
+
+    analysis.recommendations = [
+        {**RECOMMENDATIONS[0], "palette": [
+            {"name": "Terracotta", "hex": "#C1663F"},
+            {"name": "Camel", "hex": "#C19A6B"},
+        ]},
+        RECOMMENDATIONS[1],
+    ]
+    with_palette = build_style_report(analysis)
+
+    assert len(with_palette) > len(bare)

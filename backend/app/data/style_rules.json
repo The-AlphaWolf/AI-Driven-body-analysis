@@ -129,7 +129,17 @@
     "applicable_skin_tones": {"undertone": ["warm"], "depth": ["fair", "light", "medium", "tan", "deep"]},
     "explanation": "Camel, olive, terracotta, warm beige, and mustard harmonize with warm undertones. These colors echo the golden and yellow hues naturally present in your skin.",
     "weight": 0.95,
-    "tags": ["color", "palette"]
+    "tags": ["color", "palette"],
+    "palette": [
+      {"name": "Terracotta", "hex": "#C1663F"},
+      {"name": "Camel", "hex": "#C19A6B"},
+      {"name": "Sand", "hex": "#D9C3A0"},
+      {"name": "Olive", "hex": "#6B7A4B"},
+      {"name": "Rust", "hex": "#A5442A"},
+      {"name": "Mustard", "hex": "#C9A227"},
+      {"name": "Cream", "hex": "#EDE3D2"},
+      {"name": "Espresso", "hex": "#4A3728"}
+    ]
   },
   {
     "id": "col_002",
@@ -140,7 +150,17 @@
     "applicable_skin_tones": {"undertone": ["cool"], "depth": ["medium", "tan", "deep"]},
     "explanation": "Emerald, sapphire, amethyst, and ruby create stunning contrast with cool-toned deeper skin. These rich, saturated colors make your complexion glow.",
     "weight": 0.95,
-    "tags": ["color", "palette"]
+    "tags": ["color", "palette"],
+    "palette": [
+      {"name": "Emerald", "hex": "#00785A"},
+      {"name": "Sapphire", "hex": "#1B4F9C"},
+      {"name": "Amethyst", "hex": "#6B3FA0"},
+      {"name": "Ruby", "hex": "#9B1B3A"},
+      {"name": "Teal", "hex": "#10707A"},
+      {"name": "Topaz", "hex": "#C58A16"},
+      {"name": "Garnet", "hex": "#6E1023"},
+      {"name": "Ice White", "hex": "#F1F4F8"}
+    ]
   },
   {
     "id": "col_003",
@@ -151,7 +171,17 @@
     "applicable_skin_tones": {"undertone": ["cool"], "depth": ["fair", "light"]},
     "explanation": "Lavender, icy blue, soft pink, and cool mint complement fair cool-toned skin without washing you out. The subtle color adds interest while maintaining harmony.",
     "weight": 0.9,
-    "tags": ["color", "palette"]
+    "tags": ["color", "palette"],
+    "palette": [
+      {"name": "Powder Blue", "hex": "#A8C6DE"},
+      {"name": "Lavender", "hex": "#C0B4DA"},
+      {"name": "Mint", "hex": "#A9D6C4"},
+      {"name": "Icy Pink", "hex": "#E6C2CD"},
+      {"name": "Periwinkle", "hex": "#9AA7DA"},
+      {"name": "Seafoam", "hex": "#BFD9D3"},
+      {"name": "Soft Grey", "hex": "#C9CED4"},
+      {"name": "Frost", "hex": "#EBF1F5"}
+    ]
   },
   {
     "id": "col_004",
@@ -162,7 +192,17 @@
     "applicable_skin_tones": {"undertone": ["warm"], "depth": ["medium", "tan", "deep"]},
     "explanation": "Burnt orange, deep coral, warm red, and rich gold amplify the warmth in deeper skin tones. These colors create a vibrant, cohesive look.",
     "weight": 0.92,
-    "tags": ["color", "palette"]
+    "tags": ["color", "palette"],
+    "palette": [
+      {"name": "Burnt Orange", "hex": "#C05621"},
+      {"name": "Marigold", "hex": "#D98324"},
+      {"name": "Copper", "hex": "#A9603A"},
+      {"name": "Brick", "hex": "#9C3B26"},
+      {"name": "Deep Teal", "hex": "#14615E"},
+      {"name": "Rich Gold", "hex": "#C9992B"},
+      {"name": "Warm Ivory", "hex": "#EFE0C8"},
+      {"name": "Chocolate", "hex": "#5B3A24"}
+    ]
   },
   {
     "id": "col_005",
@@ -173,7 +213,17 @@
     "applicable_skin_tones": {"undertone": ["neutral"], "depth": ["fair", "light", "medium", "tan", "deep"]},
     "explanation": "Soft jade, dusty rose, medium grey, and taupe work beautifully with neutral undertones. You have the flexibility to wear both warm and cool colors — muted tones look especially refined.",
     "weight": 0.9,
-    "tags": ["color", "palette"]
+    "tags": ["color", "palette"],
+    "palette": [
+      {"name": "Soft Jade", "hex": "#7FA894"},
+      {"name": "Dusty Rose", "hex": "#C39A98"},
+      {"name": "Greige", "hex": "#A39A8C"},
+      {"name": "Stone", "hex": "#B5AFA6"},
+      {"name": "Sage", "hex": "#9AA88F"},
+      {"name": "Soft Navy", "hex": "#3C4A5C"},
+      {"name": "Off White", "hex": "#F0EDE7"},
+      {"name": "Charcoal", "hex": "#3A3A3C"}
+    ]
   },
   {
     "id": "col_006",
@@ -184,7 +234,17 @@
     "applicable_skin_tones": {"undertone": ["warm", "neutral"], "depth": ["fair", "light"]},
     "explanation": "Soft coral, peach, and warm blush tones brighten fair warm and neutral skin without overwhelming. They add a healthy glow and warmth to lighter complexions.",
     "weight": 0.85,
-    "tags": ["color", "palette"]
+    "tags": ["color", "palette"],
+    "palette": [
+      {"name": "Coral", "hex": "#F0806A"},
+      {"name": "Peach", "hex": "#F6B99B"},
+      {"name": "Apricot", "hex": "#E9A06A"},
+      {"name": "Blush", "hex": "#F0C4BC"},
+      {"name": "Salmon", "hex": "#E8836E"},
+      {"name": "Warm Rose", "hex": "#D96A73"},
+      {"name": "Soft Melon", "hex": "#F5CBA7"},
+      {"name": "Cream", "hex": "#F7EDE2"}
+    ]
   },
   {
     "id": "col_007",
@@ -195,7 +255,17 @@
     "applicable_skin_tones": {"undertone": ["warm", "cool", "neutral"], "depth": ["deep"]},
     "explanation": "White, bright yellow, electric blue, and fuchsia create striking contrast against deep skin tones. Bold colors look exceptionally elegant on deeper complexions.",
     "weight": 0.88,
-    "tags": ["color", "palette"]
+    "tags": ["color", "palette"],
+    "palette": [
+      {"name": "True Red", "hex": "#C81D33"},
+      {"name": "Cobalt", "hex": "#1A47B8"},
+      {"name": "Fuchsia", "hex": "#C22287"},
+      {"name": "Vivid Violet", "hex": "#7B2FBE"},
+      {"name": "Electric Lime", "hex": "#98C21D"},
+      {"name": "Gold", "hex": "#D4A017"},
+      {"name": "Bright White", "hex": "#FFFFFF"},
+      {"name": "Jet Black", "hex": "#101014"}
+    ]
   },
   {
     "id": "pat_001",

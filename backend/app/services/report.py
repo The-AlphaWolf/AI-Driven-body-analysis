@@ -3,7 +3,7 @@ PDF style report generation.
 
 Built with ReportLab's platypus flowables rather than an HTML-to-PDF
 converter: no headless browser, no system libraries, and the whole thing
-fits in a container layer that Hugging Face Spaces will actually build.
+fits in a container layer small enough for a free container host.
 """
 import io
 from datetime import datetime
@@ -24,8 +24,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-ACCENT = colors.HexColor("#7c5cff")
-INK = colors.HexColor("#1a1a2e")
+ACCENT = colors.HexColor("#d81b60")
+INK = colors.HexColor("#1a0d14")
 MUTED = colors.HexColor("#6b7280")
 RULE = colors.HexColor("#e5e7eb")
 
@@ -126,6 +126,44 @@ def _percent(value) -> str:
     return f"{round(value * 100)}%" if value is not None else "—"
 
 
+def _palette_strip(palette: list[dict]) -> Table | None:
+    """
+    A colour palette as swatches rather than adjectives.
+
+    "Jewel tones" is not something you can hold up against a shirt in a shop,
+    which is what this report is for. Each swatch carries its hex code so the
+    page survives being printed in greyscale.
+    """
+    swatches = [s for s in (palette or []) if s.get("hex")][:8]
+    if not swatches:
+        return None
+
+    width = 20 * mm
+    table = Table(
+        [[""] * len(swatches), [s.get("hex", "") for s in swatches]],
+        colWidths=[width] * len(swatches),
+        rowHeights=[13 * mm, 5 * mm],
+        hAlign="LEFT",
+    )
+
+    style = [
+        ("FONTSIZE", (0, 1), (-1, 1), 6),
+        ("TEXTCOLOR", (0, 1), (-1, 1), MUTED),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 1), (-1, 1), "TOP"),
+        ("TOPPADDING", (0, 1), (-1, 1), 2),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]
+    for i, swatch in enumerate(swatches):
+        style.append(("BACKGROUND", (i, 0), (i, 0), colors.HexColor(swatch["hex"])))
+        style.append(("BOX", (i, 0), (i, 0), 0.4, RULE))
+
+    table.setStyle(TableStyle(style))
+    return table
+
+
 def _escape(text) -> str:
     """Recommendation text is editorial copy, but it lands in RML markup."""
     return (
@@ -194,6 +232,10 @@ def build_style_report(analysis) -> bytes:
                 )
                 if rec.get("explanation"):
                     block.append(Paragraph(_escape(rec["explanation"]), style["body"]))
+                strip = _palette_strip(rec.get("palette"))
+                if strip:
+                    block.append(strip)
+                    block.append(Spacer(1, 4))
                 reasons = rec.get("match_reasons") or []
                 if reasons:
                     block.append(
