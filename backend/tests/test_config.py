@@ -1,6 +1,7 @@
 """Configuration guards."""
 import importlib
 
+import dotenv
 import pytest
 
 
@@ -16,10 +17,15 @@ def reload_config(monkeypatch, **env):
     for key, value in env.items():
         monkeypatch.setenv(key, value)
 
+    # load_dotenv must not resurrect the developer's local .env here. The patch
+    # goes on the dotenv module rather than on app.config, because reloading
+    # app.config re-runs its `from dotenv import load_dotenv` and would rebind
+    # the real function straight back over a patched attribute — which made
+    # these guards silently pass only on machines with no .env file.
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: None)
+
     import app.config
 
-    # load_dotenv must not resurrect the developer's local .env here.
-    monkeypatch.setattr(app.config, "load_dotenv", lambda *a, **k: None)
     return importlib.reload(app.config)
 
 

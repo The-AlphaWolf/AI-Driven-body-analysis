@@ -1,4 +1,6 @@
 """Recommendation engine scoring."""
+import re
+
 import pytest
 
 from app.services.recommendation import (
@@ -257,3 +259,38 @@ def test_output_shape_is_json_serialisable():
 
     results = generate_recommendations(FULL_FACE, FULL_SKIN, FULL_BODY)
     assert json.loads(json.dumps(results)) == results
+
+
+# ── Colour palettes ────────────────────────────────────────────────────────
+# "Jewel tones" is not a colour you can match a shirt against, so the colour
+# rules carry actual swatches and the engine has to pass them through.
+
+def test_every_colour_rule_defines_a_palette():
+    for rule in _load_rules():
+        if rule["category"] != "colors":
+            continue
+        palette = rule.get("palette")
+        assert palette, f"{rule['id']} has no palette"
+        assert len(palette) == 8, f"{rule['id']} has {len(palette)} swatches"
+        for swatch in palette:
+            assert swatch["name"]
+            assert re.fullmatch(r"#[0-9A-Fa-f]{6}", swatch["hex"]), swatch
+
+
+def test_colour_recommendations_carry_their_palette():
+    results = generate_recommendations(FULL_FACE, FULL_SKIN, FULL_BODY)
+    colours = [r for r in results if r["category"] == "colors"]
+    assert colours
+
+    for rec in colours:
+        assert rec["palette"]
+        assert all(s["hex"].startswith("#") for s in rec["palette"])
+
+
+def test_only_colour_recommendations_carry_a_palette():
+    """The key is absent rather than empty everywhere else, so the UI can
+    branch on its presence without special-casing a category name."""
+    results = generate_recommendations(FULL_FACE, FULL_SKIN, FULL_BODY)
+    for rec in results:
+        if rec["category"] != "colors":
+            assert "palette" not in rec

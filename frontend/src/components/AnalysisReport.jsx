@@ -1,42 +1,32 @@
 import FeedbackButtons from './FeedbackButtons';
+import FaceMesh from './FaceMesh';
+import { Frame, Meter, Swatches } from './Hud';
 
 /** Feedback rows are keyed by category and recommendation text, not by id. */
 const feedbackKey = (category, recommendation) => `${category}::${recommendation}`;
 
-const CATEGORY_ICONS = {
-  necklines: '👔',
-  silhouettes: '👗',
-  colors: '🎨',
-  patterns: '🔲',
-  accessories: '💍',
-  hairstyles: '💇',
-};
-
 const CATEGORY_LABELS = {
   necklines: 'Necklines',
   silhouettes: 'Silhouettes & Fits',
-  colors: 'Color Palette',
+  colors: 'Colour Palette',
   patterns: 'Patterns',
   accessories: 'Accessories',
   hairstyles: 'Hairstyles',
 };
 
-function ConfidenceBar({ value }) {
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
-        <span style={{ color: 'var(--color-text-dim)' }}>Confidence</span>
-        <span style={{ color: 'var(--color-primary-light)' }}>{Math.round(value * 100)}%</span>
-      </div>
-      <div className="confidence-bar">
-        <div className="confidence-bar-fill" style={{ width: `${value * 100}%` }} />
-      </div>
-    </div>
-  );
-}
+const CATEGORY_SLUGS = {
+  necklines: 'NECK / FACE-WEIGHTED',
+  silhouettes: 'FIT / BODY-WEIGHTED',
+  colors: 'LAB / SKIN-WEIGHTED',
+  patterns: 'SCALE / BODY-WEIGHTED',
+  accessories: 'DETAIL / MIXED',
+  hairstyles: 'CROWN / FACE-WEIGHTED',
+};
+
+const titleCase = (value) => (value || '').replace(/_/g, ' ');
 
 /**
- * The attribute cards and recommendation grid for one analysis.
+ * The attribute panel and recommendation list for one analysis.
  *
  * Shared by the owner's results page and the public share page. The public
  * view passes no feedback handler, which hides the like/dislike controls —
@@ -57,111 +47,119 @@ export default function AnalysisReport({
     grouped[rec.category].push(rec);
   });
 
+  // The first colour recommendation's swatches double as the report's palette.
+  const headlinePalette = (grouped.colors || []).find((r) => r.palette?.length)?.palette;
+
+  const detected = Boolean(face_analysis || skin_analysis || body_analysis);
+
   return (
     <>
-      {/* ── Detected attributes ─────────────────────────────────────── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-        gap: '20px',
-        marginBottom: '48px',
-      }}>
-        {face_analysis && (
-          <div className="glass-card fade-in stagger-1" style={{ padding: '28px 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '1.5rem' }}>👤</span>
-              <h3 style={{ fontSize: '1rem', color: 'var(--color-text-muted)' }}>Face Shape</h3>
-            </div>
-            <div style={{ marginBottom: '16px' }}>
-              <span className="badge badge-primary" style={{ fontSize: '1.1rem', padding: '8px 20px', textTransform: 'capitalize' }}>
-                {face_analysis.shape}
-              </span>
-            </div>
-            <ConfidenceBar value={face_analysis.confidence} />
+      {/* ── Instrument panel ────────────────────────────────────────── */}
+      {detected && (
+        <Frame className="fade-in" style={{ padding: '28px 26px', marginBottom: '40px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            gap: '16px',
+            paddingBottom: '20px',
+            marginBottom: '26px',
+            borderBottom: '1px solid var(--line)',
+          }}>
+            <span className="label label-accent">Analysis</span>
+            <span className="label">MediaPipe · K-Means · LAB</span>
           </div>
-        )}
 
-        {skin_analysis && (
-          <div className="glass-card fade-in stagger-2" style={{ padding: '28px 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '1.5rem' }}>🎨</span>
-              <h3 style={{ fontSize: '1rem', color: 'var(--color-text-muted)' }}>Skin Tone</h3>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-              <div style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: 'var(--radius-md)',
-                background: skin_analysis.hex_color,
-                border: '2px solid var(--color-border)',
-                boxShadow: `0 0 20px ${skin_analysis.hex_color}40`,
-                flexShrink: 0,
-              }} />
-              <div>
-                <div style={{ textTransform: 'capitalize', fontWeight: 600, fontSize: '1rem' }}>
-                  {skin_analysis.depth}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', textTransform: 'capitalize' }}>
-                  {skin_analysis.undertone} undertone
-                </div>
-              </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '40px',
+            alignItems: 'center',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <FaceMesh />
             </div>
 
-            {skin_analysis.low_confidence_flag && (
-              <div className="badge badge-warning" style={{ fontSize: '0.75rem', marginBottom: '8px' }}>
-                ⚠ Low confidence — lighting may be uneven
-              </div>
-            )}
+            <div style={{ display: 'grid', gap: '22px' }}>
+              {face_analysis && (
+                <AttributeRow
+                  label="Face Shape"
+                  value={titleCase(face_analysis.shape)}
+                  confidence={face_analysis.confidence}
+                />
+              )}
 
-            <ConfidenceBar value={skin_analysis.confidence} />
+              {skin_analysis && (
+                <AttributeRow
+                  label="Skin Tone"
+                  value={`${titleCase(skin_analysis.depth)} — ${titleCase(skin_analysis.undertone)}`}
+                  confidence={skin_analysis.confidence}
+                  chip={skin_analysis.hex_color}
+                  warning={skin_analysis.low_confidence_flag
+                    ? 'Uneven lighting — reading may be unreliable'
+                    : null}
+                />
+              )}
+
+              {body_analysis && (
+                <AttributeRow
+                  label="Body Type"
+                  value={titleCase(body_analysis.shape)}
+                  confidence={body_analysis.confidence}
+                />
+              )}
+            </div>
           </div>
-        )}
 
-        {body_analysis && (
-          <div className="glass-card fade-in stagger-3" style={{ padding: '28px 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '1.5rem' }}>📐</span>
-              <h3 style={{ fontSize: '1rem', color: 'var(--color-text-muted)' }}>Body Shape</h3>
+          {headlinePalette && (
+            <div style={{ marginTop: '36px' }}>
+              <span className="label" style={{ marginBottom: '14px' }}>Recommended palette</span>
+              <Swatches palette={headlinePalette} />
             </div>
-            <div style={{ marginBottom: '16px' }}>
-              <span className="badge badge-accent" style={{ fontSize: '1.1rem', padding: '8px 20px', textTransform: 'capitalize' }}>
-                {body_analysis.shape.replace('_', ' ')}
-              </span>
-            </div>
-            <ConfidenceBar value={body_analysis.confidence} />
-          </div>
-        )}
-      </div>
+          )}
+        </Frame>
+      )}
 
       {/* ── Recommendations ─────────────────────────────────────────── */}
-      {recommendations && recommendations.length > 0 && (
-        <div className="fade-in" style={{ animationDelay: '0.4s' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '8px', textAlign: 'center' }}>
-            Personalized Recommendations
-          </h2>
-          <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', marginBottom: '32px', fontSize: '0.9rem' }}>
-            {interactive
-              ? 'Tap the heart to keep one, or thumbs-down to hide it from future advice'
-              : 'Tailored suggestions based on the detected attributes'}
-          </p>
+      {recommendations?.length > 0 && (
+        <div className="fade-in stagger-2">
+          <div className="section-head">
+            <div>
+              <h2 style={{ textTransform: 'uppercase' }}>Recommendations</h2>
+              <p className="mono" style={{ marginTop: '6px' }}>
+                {interactive
+                  ? 'KEEP OR REJECT — REJECTED ITEMS INFORM FUTURE ADVICE'
+                  : 'TAILORED TO THE DETECTED ATTRIBUTES'}
+              </p>
+            </div>
+            <span className="label label-accent">
+              {recommendations.length} Items
+            </span>
+          </div>
 
           {Object.entries(grouped).map(([category, recs]) => (
-            <div key={category} style={{ marginBottom: '36px' }}>
-              <h3 style={{
-                fontSize: '1.1rem',
-                marginBottom: '16px',
+            <section key={category} style={{ marginBottom: '44px' }}>
+              <div style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: 'var(--color-primary-light)',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                gap: '14px',
+                marginBottom: '16px',
               }}>
-                <span>{CATEGORY_ICONS[category] || '📋'}</span>
-                {CATEGORY_LABELS[category] || category}
-              </h3>
+                <h3 style={{
+                  fontSize: '0.95rem',
+                  textTransform: 'uppercase',
+                  color: 'var(--accent)',
+                  letterSpacing: '0.04em',
+                }}>
+                  {CATEGORY_LABELS[category] || category}
+                </h3>
+                <span className="label">{CATEGORY_SLUGS[category] || category}</span>
+              </div>
 
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: '16px',
               }}>
                 {recs.map((rec, i) => {
@@ -169,19 +167,29 @@ export default function AnalysisReport({
                   const verdict = feedback[key] || null;
 
                   return (
-                    <div
+                    <Frame
                       key={i}
-                      className="glass-card"
+                      hover
                       style={{
-                        padding: '20px',
-                        transition: 'transform 0.2s ease, opacity 0.2s ease',
-                        opacity: verdict === 'dislike' ? 0.55 : 1,
+                        padding: '20px 18px',
+                        opacity: verdict === 'dislike' ? 0.45 : 1,
+                        transition: 'opacity 0.25s ease',
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
                     >
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <h4 style={{ fontSize: '1rem', flex: 1 }}>{rec.recommendation}</h4>
+                      <div style={{
+                        display: 'flex',
+                        gap: '12px',
+                        alignItems: 'flex-start',
+                        marginBottom: '10px',
+                      }}>
+                        <h4 style={{
+                          fontSize: '0.98rem',
+                          flex: 1,
+                          textTransform: 'uppercase',
+                          lineHeight: 1.3,
+                        }}>
+                          {rec.recommendation}
+                        </h4>
                         {interactive && (
                           <FeedbackButtons
                             analysisId={analysisId}
@@ -193,25 +201,80 @@ export default function AnalysisReport({
                         )}
                       </div>
 
-                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: 1.6, marginBottom: '12px' }}>
+                      <p style={{
+                        fontSize: '0.83rem',
+                        color: 'var(--text-muted)',
+                        lineHeight: 1.65,
+                        marginBottom: rec.palette ? '16px' : '12px',
+                      }}>
                         {rec.explanation}
                       </p>
 
+                      {rec.palette && (
+                        <div style={{ marginBottom: '14px' }}>
+                          <Swatches palette={rec.palette} />
+                        </div>
+                      )}
+
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                         {rec.match_reasons?.slice(0, 3).map((reason, j) => (
-                          <span key={j} className="badge badge-success" style={{ fontSize: '0.7rem' }}>
-                            ✓ {reason}
-                          </span>
+                          <span key={j} className="tag tag-ok">{reason}</span>
                         ))}
                       </div>
-                    </div>
+                    </Frame>
                   );
                 })}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}
     </>
+  );
+}
+
+/** One measured attribute: caption, value, percentage, meter. */
+function AttributeRow({ label, value, confidence, chip = null, warning = null }) {
+  return (
+    <div>
+      <span className="label" style={{ marginBottom: '5px' }}>{label}</span>
+
+      <div style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: '16px',
+        marginBottom: '9px',
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '11px', minWidth: 0 }}>
+          {chip && (
+            <span
+              aria-hidden="true"
+              style={{
+                width: '17px',
+                height: '17px',
+                background: chip,
+                border: '1px solid rgba(255,255,255,0.2)',
+                flexShrink: 0,
+              }}
+            />
+          )}
+          <span className="readout">{value}</span>
+        </span>
+        <span className="meter-value">{Math.round((confidence || 0) * 100)}%</span>
+      </div>
+
+      <Meter value={confidence} />
+
+      {chip && (
+        <span className="mono" style={{ display: 'block', marginTop: '7px' }}>
+          {chip.toUpperCase()}
+        </span>
+      )}
+
+      {warning && (
+        <span className="tag tag-warn" style={{ marginTop: '10px' }}>{warning}</span>
+      )}
+    </div>
   );
 }

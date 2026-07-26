@@ -250,14 +250,22 @@ def generate_recommendations(
                 if skin_depth in skin_tones.get("depth", []):
                     reasons.append(f"Great for your {skin_depth} skin tone")
 
-            scored_rules.append({
+            entry = {
                 "category": rule["category"],
                 "recommendation": rule["recommendation"],
                 "explanation": rule["explanation"],
                 "score": round(score, 3),
                 "match_reasons": reasons,
                 "tags": rule.get("tags", []),
-            })
+            }
+
+            # Colour advice is the one category a name cannot carry on its own —
+            # "jewel tones" means nothing without the swatches. Only the colour
+            # rules define a palette, so the key is absent everywhere else.
+            if rule.get("palette"):
+                entry["palette"] = rule["palette"]
+
+            scored_rules.append(entry)
 
     # ── Group by category and take top N per category ──────────────────
     scored_rules.sort(key=lambda r: r["score"], reverse=True)

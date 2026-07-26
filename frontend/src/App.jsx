@@ -11,6 +11,7 @@ import ResultsPage from './pages/ResultsPage';
 import DashboardPage from './pages/DashboardPage';
 import SavedPage from './pages/SavedPage';
 import SharedResultsPage from './pages/SharedResultsPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 export default function App() {
   return (
@@ -37,6 +38,9 @@ export default function App() {
               <Route path="/saved" element={
                 <ProtectedRoute><SavedPage /></ProtectedRoute>
               } />
+              {/* The host rewrites unmatched URLs to index.html, so without
+                  this an unknown path renders an empty page. */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>
         </ToastProvider>

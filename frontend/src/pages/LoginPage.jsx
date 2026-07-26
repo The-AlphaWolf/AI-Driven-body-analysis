@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { Frame } from '../components/Hud';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -14,16 +15,16 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      addToast('Please fill in all fields', 'error');
+      addToast('Both fields are required', 'error');
       return;
     }
     setLoading(true);
     try {
       await login(email, password);
-      addToast('Welcome back!', 'success');
+      addToast('Signed in', 'success');
       navigate('/dashboard');
     } catch (err) {
-      addToast(err.message || 'Login failed', 'error');
+      addToast(err.message || 'Sign in failed', 'error');
     } finally {
       setLoading(false);
     }
@@ -31,24 +32,34 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 64px)',
+      minHeight: 'calc(100vh - var(--nav-h))',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '40px 24px',
+      padding: '48px 24px',
     }}>
-      <div className="glass-card fade-in" style={{ width: '100%', maxWidth: '420px', padding: '40px 32px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '1.8rem', marginBottom: '8px' }}>Welcome Back</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-            Sign in to your StyleSense account
-          </p>
+      <Frame className="fade-in" style={{ width: '100%', maxWidth: '420px', padding: '38px 30px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          paddingBottom: '18px',
+          marginBottom: '26px',
+          borderBottom: '1px solid var(--line)',
+        }}>
+          <span className="label label-accent">Access</span>
+          <span className="label">Auth / JWT</span>
         </div>
 
+        <h1 style={{ fontSize: '1.5rem', textTransform: 'uppercase', marginBottom: '26px' }}>
+          Sign In
+        </h1>
+
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label className="input-label">Email</label>
+          <div style={{ marginBottom: '18px' }}>
+            <label className="input-label" htmlFor="login-email">Email</label>
             <input
+              id="login-email"
               type="email"
               className="input"
               placeholder="you@example.com"
@@ -59,9 +70,10 @@ export default function LoginPage() {
             />
           </div>
 
-          <div style={{ marginBottom: '28px' }}>
-            <label className="input-label">Password</label>
+          <div style={{ marginBottom: '26px' }}>
+            <label className="input-label" htmlFor="login-password">Password</label>
             <input
+              id="login-password"
               type="password"
               className="input"
               placeholder="••••••••"
@@ -79,19 +91,18 @@ export default function LoginPage() {
             style={{ width: '100%', padding: '14px' }}
           >
             {loading ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="spinner" style={{ width: '18px', height: '18px', borderWidth: '2px' }} />
-                Signing in...
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className="spinner" style={{ width: '15px', height: '15px' }} />
+                Authenticating…
               </span>
             ) : 'Sign In'}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-          Don't have an account?{' '}
-          <Link to="/register" style={{ fontWeight: 600 }}>Create one</Link>
+        <p className="mono" style={{ textAlign: 'center', marginTop: '24px' }}>
+          NO ACCOUNT? <Link to="/register">CREATE ONE</Link>
         </p>
-      </div>
+      </Frame>
     </div>
   );
 }

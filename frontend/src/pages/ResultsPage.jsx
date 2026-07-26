@@ -3,6 +3,7 @@ import { useParams, useLocation, Link } from 'react-router-dom';
 import AnalysisReport from '../components/AnalysisReport';
 import ShareControls from '../components/ShareControls';
 import { SkeletonResults } from '../components/Skeleton';
+import { Frame } from '../components/Hud';
 import api from '../services/api';
 
 export default function ResultsPage() {
@@ -49,28 +50,35 @@ export default function ResultsPage() {
 
   if (!analysis) {
     return (
-      <div className="container" style={{ textAlign: 'center', padding: '80px 24px' }}>
-        <h2>Analysis not found</h2>
-        <Link to="/analyze" className="btn btn-primary" style={{ marginTop: '20px' }}>New Analysis</Link>
+      <div className="container" style={{ padding: '80px 28px', maxWidth: '620px' }}>
+        <Frame style={{ padding: '48px 28px', textAlign: 'center' }}>
+          <span className="label label-accent" style={{ marginBottom: '14px' }}>Error 404</span>
+          <h2 style={{ textTransform: 'uppercase', marginBottom: '10px' }}>Report not found</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '26px' }}>
+            It may have been deleted, or it belongs to another account.
+          </p>
+          <Link to="/analyze" className="btn btn-primary">New Scan</Link>
+        </Frame>
       </div>
     );
   }
 
+  const stamp = new Date(analysis.created_at);
+
   return (
-    <div className="container" style={{ padding: '48px 24px', maxWidth: '1000px' }}>
-      <div className="fade-in" style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
-          Your Style <span style={{
-            background: 'var(--gradient-primary)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>Analysis</span>
-        </h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-          {new Date(analysis.created_at).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
-          })}
-        </p>
+    <div className="container" style={{ padding: '48px 28px 80px', maxWidth: '1040px' }}>
+      <div className="section-head fade-in">
+        <div>
+          <span className="label label-accent" style={{ marginBottom: '10px' }}>Style Report</span>
+          <h1 style={{ fontSize: 'clamp(1.7rem, 4vw, 2.4rem)', textTransform: 'uppercase' }}>
+            Your Analysis
+          </h1>
+        </div>
+        <span className="label">
+          {stamp.toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+          {' · '}
+          {stamp.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+        </span>
       </div>
 
       <AnalysisReport
@@ -86,9 +94,9 @@ export default function ResultsPage() {
         onShareChange={setShareToken}
       />
 
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '32px', flexWrap: 'wrap' }}>
-        <Link to="/analyze" className="btn btn-primary">✨ New Analysis</Link>
-        <Link to="/dashboard" className="btn btn-secondary">📊 Dashboard</Link>
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '28px', flexWrap: 'wrap' }}>
+        <Link to="/analyze" className="btn btn-primary">New Scan</Link>
+        <Link to="/dashboard" className="btn btn-secondary">Archive</Link>
       </div>
     </div>
   );
