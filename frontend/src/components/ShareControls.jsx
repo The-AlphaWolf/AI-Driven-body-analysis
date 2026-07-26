@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '../context/ToastContext';
+import { Frame } from './Hud';
 import api from '../services/api';
 
 /**
@@ -64,61 +65,43 @@ export default function ShareControls({ analysisId, shareToken, onShareChange })
   };
 
   return (
-    <div className="glass-card" style={{ padding: '20px', marginTop: '32px' }}>
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
+    <Frame label="Export" slug={shareToken ? 'Sharing On' : 'Sharing Off'} style={{ marginTop: '36px' }}>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <button type="button" onClick={download} disabled={busy} className="btn btn-secondary">
-          📄 Download PDF
+          Download PDF
         </button>
 
         {shareToken ? (
           <button type="button" onClick={disable} disabled={busy} className="btn btn-secondary">
-            🔒 Stop sharing
+            Revoke Link
           </button>
         ) : (
           <button type="button" onClick={enable} disabled={busy} className="btn btn-secondary">
-            🔗 Create share link
+            Create Share Link
           </button>
         )}
       </div>
 
       {shareUrl && (
-        <div style={{ marginTop: '16px' }}>
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}>
+        <div style={{ marginTop: '18px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch', flexWrap: 'wrap' }}>
             <input
               readOnly
+              className="input"
               value={shareUrl}
               onFocus={(e) => e.target.select()}
-              style={{
-                flex: 1,
-                minWidth: '220px',
-                padding: '8px 12px',
-                fontSize: '0.8rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--color-border)',
-                background: 'var(--color-surface)',
-                color: 'var(--color-text-muted)',
-              }}
+              aria-label="Public share link"
+              style={{ flex: 1, minWidth: '220px', fontSize: '0.72rem', color: 'var(--text-muted)' }}
             />
-            <button type="button" onClick={copy} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
-              {copied ? '✓ Copied' : 'Copy'}
+            <button type="button" onClick={copy} className="btn btn-primary">
+              {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-dim)', marginTop: '8px' }}>
-            Anyone with this link can see your results. Your photo is not included.
+          <p className="mono" style={{ marginTop: '10px' }}>
+            ANYONE WITH THIS LINK CAN READ THE ADVICE. YOUR PHOTO IS NOT INCLUDED.
           </p>
         </div>
       )}
-    </div>
+    </Frame>
   );
 }

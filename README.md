@@ -26,7 +26,9 @@ StyleSense AI analyses uploaded photos using computer vision to detect:
 
 Those attributes feed a **weighted recommendation engine** that produces styling
 advice across silhouettes, necklines, colour palettes, patterns, accessories and
-hairstyles — each with an explanation of *why* it suits you.
+hairstyles — each with an explanation of *why* it suits you. Colour advice comes
+with the actual swatches and hex codes, on screen and in the PDF, because
+"jewel tones" is not something you can hold up against a shirt in a shop.
 
 You can keep or reject each suggestion, collect the ones you liked, export the
 whole thing as a PDF, and share a read-only link that omits your photo.
@@ -89,6 +91,7 @@ whole thing as a PDF, and share a read-only link that omits your photo.
 - **Analyse a face photo, a body photo, or both.** Each is optional; the engine adapts to whatever it can detect.
 - **Confidence scores** on every detection, with a warning when lighting makes the skin reading unreliable.
 - **Explained recommendations** — every suggestion carries the reasons it was chosen for you.
+- **Real colour swatches** — each palette ships eight named colours with hex codes, rendered on the report and printed into the PDF.
 - **Keep or reject** any suggestion. Liked items collect on a Saved page.
 - **PDF export** — a printable report you can take shopping.
 - **Revocable share links** that expose the advice but not your photo.
@@ -141,7 +144,7 @@ npm run dev
 ### Tests
 
 ```bash
-cd backend && pytest         # 149 tests, ~20s
+cd backend && pytest         # 155 tests, ~20s
 cd frontend && npm run lint && npm run build
 ```
 

@@ -10,7 +10,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await logout();
-      addToast('Logged out successfully', 'success');
+      addToast('Session ended', 'success');
       navigate('/');
     } catch {
       addToast('Logout failed', 'error');
@@ -22,64 +22,47 @@ export default function Navbar() {
       position: 'sticky',
       top: 0,
       zIndex: 100,
-      background: 'var(--color-card)',
-      backdropFilter: 'blur(20px)',
-      borderBottom: '1px solid var(--color-border)',
+      background: 'rgba(8, 3, 6, 0.82)',
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+      borderBottom: '1px solid var(--line)',
     }}>
-      <div className="container" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: '64px',
-      }}>
-        {/* Logo */}
-        <Link to="/" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          fontWeight: 700,
-          fontSize: '1.2rem',
-          color: 'var(--color-text)',
-          textDecoration: 'none',
-        }}>
+      {/* Layout lives in CSS, not inline, so the narrow-width rules that stack
+          this into two rows can actually win the cascade. */}
+      <div className="container nav-bar">
+        {/* Wordmark — the frame motif, then the name in monospace. */}
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '11px', color: 'var(--text)' }}>
+          <svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <g stroke="var(--accent)" strokeWidth="2.4" fill="none" strokeLinecap="square">
+              <path d="M4 10V4h6M22 4h6v6M28 22v6h-6M10 28H4v-6" />
+            </g>
+            <circle cx="16" cy="16" r="3.4" fill="var(--accent)" />
+          </svg>
           <span style={{
-            background: 'var(--gradient-primary)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontSize: '1.4rem',
-          }}>✦</span>
-          <span>StyleSense<span style={{
-            background: 'var(--gradient-primary)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}> AI</span></span>
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+          }}>
+            StyleSense<span style={{ color: 'var(--accent)' }}>//</span>AI
+          </span>
         </Link>
 
-        {/* Navigation Links */}
         <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {user ? (
             <>
-              <Link to="/analyze" className="btn btn-primary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
-                ✨ New Analysis
-              </Link>
-              <Link to="/dashboard" className="btn btn-secondary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
-                Dashboard
-              </Link>
-              <Link to="/saved" className="btn btn-secondary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
-                ❤️ Saved
-              </Link>
-              <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
-                Logout
+              <Link to="/analyze" className="btn btn-primary">New Scan</Link>
+              <Link to="/dashboard" className="btn btn-secondary">Archive</Link>
+              <Link to="/saved" className="btn btn-secondary">Kept</Link>
+              <button type="button" onClick={handleLogout} className="btn btn-secondary">
+                Exit
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="btn btn-secondary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
-                Sign In
-              </Link>
-              <Link to="/register" className="btn btn-primary" style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
-                Get Started
-              </Link>
+              <Link to="/login" className="btn btn-secondary">Sign In</Link>
+              <Link to="/register" className="btn btn-primary">Get Started</Link>
             </>
           )}
         </div>

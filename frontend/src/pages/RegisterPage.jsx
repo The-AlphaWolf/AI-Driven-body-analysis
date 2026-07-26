@@ -2,6 +2,25 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { Frame } from '../components/Hud';
+
+const LEVELS = [
+  { label: 'Weak', color: 'var(--danger)' },
+  { label: 'Fair', color: 'var(--warn)' },
+  { label: 'Good', color: 'var(--accent-soft)' },
+  { label: 'Strong', color: 'var(--ok)' },
+];
+
+function strengthOf(pwd) {
+  if (!pwd) return { level: 0, label: '', color: 'transparent' };
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  const level = LEVELS[score - 1];
+  return level ? { level: score, ...level } : { level: 0, label: '', color: 'transparent' };
+}
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -12,29 +31,13 @@ export default function RegisterPage() {
   const { addToast } = useToast();
   const navigate = useNavigate();
 
-  // Password strength indicator
-  const getStrength = (pwd) => {
-    if (!pwd) return { level: 0, label: '', color: 'transparent' };
-    let score = 0;
-    if (pwd.length >= 8) score++;
-    if (/[A-Z]/.test(pwd)) score++;
-    if (/[0-9]/.test(pwd)) score++;
-    if (/[^A-Za-z0-9]/.test(pwd)) score++;
-    const levels = [
-      { level: 1, label: 'Weak', color: 'var(--color-error)' },
-      { level: 2, label: 'Fair', color: 'var(--color-warning)' },
-      { level: 3, label: 'Good', color: 'var(--color-primary-light)' },
-      { level: 4, label: 'Strong', color: 'var(--color-success)' },
-    ];
-    return levels[score - 1] || { level: 0, label: '', color: 'transparent' };
-  };
-
-  const strength = getStrength(password);
+  const strength = strengthOf(password);
+  const mismatch = confirm && confirm !== password;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password || !confirm) {
-      addToast('Please fill in all fields', 'error');
+      addToast('All fields are required', 'error');
       return;
     }
     if (password !== confirm) {
@@ -49,7 +52,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(email, password);
-      addToast('Account created! Welcome to StyleSense AI', 'success');
+      addToast('Account created', 'success');
       navigate('/analyze');
     } catch (err) {
       addToast(err.message || 'Registration failed', 'error');
@@ -60,24 +63,34 @@ export default function RegisterPage() {
 
   return (
     <div style={{
-      minHeight: 'calc(100vh - 64px)',
+      minHeight: 'calc(100vh - var(--nav-h))',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '40px 24px',
+      padding: '48px 24px',
     }}>
-      <div className="glass-card fade-in" style={{ width: '100%', maxWidth: '420px', padding: '40px 32px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '1.8rem', marginBottom: '8px' }}>Create Account</h1>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-            Join StyleSense AI and discover your perfect style
-          </p>
+      <Frame className="fade-in" style={{ width: '100%', maxWidth: '420px', padding: '38px 30px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          paddingBottom: '18px',
+          marginBottom: '26px',
+          borderBottom: '1px solid var(--line)',
+        }}>
+          <span className="label label-accent">Register</span>
+          <span className="label">Free / No Card</span>
         </div>
 
+        <h1 style={{ fontSize: '1.5rem', textTransform: 'uppercase', marginBottom: '26px' }}>
+          Create Account
+        </h1>
+
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '20px' }}>
-            <label className="input-label">Email</label>
+          <div style={{ marginBottom: '18px' }}>
+            <label className="input-label" htmlFor="reg-email">Email</label>
             <input
+              id="reg-email"
               type="email"
               className="input"
               placeholder="you@example.com"
@@ -88,9 +101,10 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div style={{ marginBottom: '6px' }}>
-            <label className="input-label">Password</label>
+          <div style={{ marginBottom: password ? '10px' : '18px' }}>
+            <label className="input-label" htmlFor="reg-password">Password</label>
             <input
+              id="reg-password"
               type="password"
               className="input"
               placeholder="Min 8 chars, 1 letter + 1 number"
@@ -101,31 +115,24 @@ export default function RegisterPage() {
             />
           </div>
 
-          {/* Password strength bar */}
           {password && (
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{
-                height: '4px',
-                background: 'var(--color-border)',
-                borderRadius: 'var(--radius-full)',
-                overflow: 'hidden',
-                marginBottom: '6px',
-              }}>
+            <div style={{ marginBottom: '18px' }}>
+              <div style={{ height: '3px', background: 'rgba(255,255,255,0.07)', marginBottom: '7px' }}>
                 <div style={{
                   height: '100%',
                   width: `${strength.level * 25}%`,
                   background: strength.color,
-                  borderRadius: 'var(--radius-full)',
-                  transition: 'all 0.3s ease',
+                  transition: 'width 0.3s ease, background 0.3s ease',
                 }} />
               </div>
-              <span style={{ fontSize: '0.75rem', color: strength.color }}>{strength.label}</span>
+              <span className="label" style={{ color: strength.color }}>{strength.label}</span>
             </div>
           )}
 
-          <div style={{ marginBottom: '28px' }}>
-            <label className="input-label">Confirm Password</label>
+          <div style={{ marginBottom: '26px' }}>
+            <label className="input-label" htmlFor="reg-confirm">Confirm Password</label>
             <input
+              id="reg-confirm"
               type="password"
               className="input"
               placeholder="••••••••"
@@ -133,12 +140,13 @@ export default function RegisterPage() {
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
               disabled={loading}
-              style={confirm && confirm !== password ? { borderColor: 'var(--color-error)' } : {}}
+              aria-invalid={mismatch || undefined}
+              style={mismatch ? { borderColor: 'var(--danger)' } : undefined}
             />
-            {confirm && confirm !== password && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--color-error)', marginTop: '4px' }}>
+            {mismatch && (
+              <span className="label" style={{ color: 'var(--danger)', marginTop: '7px' }}>
                 Passwords do not match
-              </p>
+              </span>
             )}
           </div>
 
@@ -149,19 +157,18 @@ export default function RegisterPage() {
             style={{ width: '100%', padding: '14px' }}
           >
             {loading ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="spinner" style={{ width: '18px', height: '18px', borderWidth: '2px' }} />
-                Creating account...
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className="spinner" style={{ width: '15px', height: '15px' }} />
+                Creating…
               </span>
             ) : 'Create Account'}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-          Already have an account?{' '}
-          <Link to="/login" style={{ fontWeight: 600 }}>Sign in</Link>
+        <p className="mono" style={{ textAlign: 'center', marginTop: '24px' }}>
+          ALREADY REGISTERED? <Link to="/login">SIGN IN</Link>
         </p>
-      </div>
+      </Frame>
     </div>
   );
 }

@@ -1,202 +1,327 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import FaceMesh from '../components/FaceMesh';
+import { Frame, Meter, SectionHead, Swatches } from '../components/Hud';
+
+/**
+ * The landing page is built as a worked example: rather than describing what
+ * the analysis produces, it shows a finished readout panel and lets the
+ * layout carry the explanation.
+ */
+
+const MODULES = [
+  {
+    index: '01',
+    title: 'Face Shape',
+    slug: 'MEDIAPIPE / 478 PTS',
+    desc: 'Landmark geometry from a face mesh, reduced to the width, length and jaw ratios that separate oval from heart from square.',
+  },
+  {
+    index: '02',
+    title: 'Skin Tone',
+    slug: 'K-MEANS / LAB',
+    desc: 'Sampled skin pixels clustered in LAB colour space, resolved into a depth band and a warm, cool or neutral undertone.',
+  },
+  {
+    index: '03',
+    title: 'Body Proportion',
+    slug: 'POSE / 33 PTS',
+    desc: 'Shoulder, waist and hip landmarks from pose estimation, compared as ratios to classify the silhouette.',
+  },
+  {
+    index: '04',
+    title: 'Recommendation',
+    slug: 'WEIGHTED SCORING',
+    desc: 'A rules dataset scored against your attribute vector, with category-dependent weights and hard exclusion of contradicting advice.',
+  },
+];
+
+/* A representative reading — the same shape the analyser returns. */
+const SPECIMEN = {
+  rows: [
+    { label: 'Face Shape', value: 'Oval', confidence: 0.93 },
+    { label: 'Undertone', value: 'Warm — Autumn', confidence: 0.87 },
+    { label: 'Body Type', value: 'Inverted Triangle', confidence: 0.81 },
+    { label: 'Contrast', value: 'Medium-High', confidence: 0.76 },
+  ],
+  palette: [
+    { name: 'Terracotta', hex: '#C1663F' },
+    { name: 'Marigold', hex: '#D98324' },
+    { name: 'Camel', hex: '#C19A6B' },
+    { name: 'Olive', hex: '#6B7A4B' },
+    { name: 'Deep Teal', hex: '#14615E' },
+    { name: 'Rust', hex: '#A5442A' },
+    { name: 'Cream', hex: '#EDE3D2' },
+    { name: 'Espresso', hex: '#4A3728' },
+  ],
+};
 
 export default function LandingPage() {
   const { user } = useAuth();
-
-  const features = [
-    {
-      icon: '👤',
-      title: 'Face Shape Analysis',
-      desc: 'AI-powered detection using 478 facial landmarks to classify your face shape with confidence scoring.',
-    },
-    {
-      icon: '🎨',
-      title: 'Skin Tone Classification',
-      desc: 'K-means clustering in LAB color space to determine your skin depth and undertone — warm, cool, or neutral.',
-    },
-    {
-      icon: '📐',
-      title: 'Body Proportion Mapping',
-      desc: 'Full-body pose estimation to compute shoulder-to-hip ratios and classify your body shape.',
-    },
-    {
-      icon: '✨',
-      title: 'Smart Recommendations',
-      desc: 'Weighted scoring engine matching your unique attributes to clothing, colors, hairstyles, and accessories.',
-    },
-  ];
+  const startTo = user ? '/analyze' : '/register';
+  const startLabel = user ? 'Start Analysis' : 'Get Started Free';
 
   return (
     <div>
-      {/* ── Hero Section ─────────────────────────────────────────── */}
-      <section style={{
-        minHeight: 'calc(100vh - 64px)',
-        display: 'flex',
-        alignItems: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Background glow */}
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
+      <section className="container" style={{ padding: '72px 28px 40px' }}>
         <div style={{
-          position: 'absolute',
-          top: '-20%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '800px',
-          height: '800px',
-          background: 'var(--gradient-glow)',
-          borderRadius: '50%',
-          pointerEvents: 'none',
-        }} />
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr)',
+          gap: '48px',
+          alignItems: 'center',
+        }}>
+          <div className="fade-in" style={{ maxWidth: '660px' }}>
+            <span className="label label-accent" style={{ marginBottom: '18px' }}>
+              Facial structure + skin-tone fashion engine
+            </span>
 
-        <div className="container" style={{ position: 'relative', textAlign: 'center', padding: '60px 24px' }}>
-          <div className="fade-in">
-            <span className="badge badge-primary" style={{ marginBottom: '24px' }}>
-              🔬 Powered by Computer Vision
+            <h1 style={{
+              fontSize: 'clamp(2.4rem, 6.5vw, 4.2rem)',
+              lineHeight: 1.02,
+              textTransform: 'uppercase',
+              marginBottom: '22px',
+            }}>
+              AI Style &amp;<br />
+              <span style={{ color: 'var(--accent)' }}>Body Analysis</span>
+            </h1>
+
+            <p style={{
+              color: 'var(--text-muted)',
+              fontSize: '1rem',
+              maxWidth: '540px',
+              marginBottom: '32px',
+            }}>
+              Upload a photo. Computer vision reads your face shape, skin tone and
+              body proportions, then a scoring engine turns those measurements into
+              styling advice that shows its working.
+            </p>
+
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '28px' }}>
+              <Link to={startTo} className="btn btn-primary" style={{ padding: '14px 30px' }}>
+                {startLabel}
+              </Link>
+              <a href="#modules" className="btn btn-secondary" style={{ padding: '14px 30px' }}>
+                How it works ↓
+              </a>
+            </div>
+
+            <p className="mono">
+              MEDIAPIPE · 478 LANDMARKS · LAB ΔE MATCHING · NO PAID APIS
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Worked example ────────────────────────────────────────────── */}
+      <section className="container" style={{ padding: '20px 28px 80px' }}>
+        <Frame className="fade-in stagger-1" style={{ padding: '28px 26px 24px' }}>
+          {/* Top rail */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            gap: '16px',
+            paddingBottom: '20px',
+            marginBottom: '26px',
+            borderBottom: '1px solid var(--line)',
+          }}>
+            <span className="label">Sample Report / 01</span>
+            <span className="label">Representative output</span>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
+            gap: '40px',
+            alignItems: 'center',
+          }}>
+            {/* Mesh */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <FaceMesh />
+            </div>
+
+            {/* Readouts */}
+            <div>
+              <span className="label label-accent" style={{ marginBottom: '20px' }}>Analysis</span>
+
+              <div style={{ display: 'grid', gap: '20px' }}>
+                {SPECIMEN.rows.map((row) => (
+                  <div key={row.label}>
+                    <span className="label" style={{ marginBottom: '5px' }}>{row.label}</span>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      justifyContent: 'space-between',
+                      gap: '16px',
+                      marginBottom: '9px',
+                    }}>
+                      <span className="readout">{row.value}</span>
+                      <span className="meter-value">{Math.round(row.confidence * 100)}%</span>
+                    </div>
+                    <Meter value={row.confidence} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Palette */}
+          <div style={{ marginTop: '36px' }}>
+            <span className="label" style={{ marginBottom: '14px' }}>Recommended palette</span>
+            <Swatches palette={SPECIMEN.palette} />
+          </div>
+
+          {/* Bottom rail */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            gap: '16px',
+            flexWrap: 'wrap',
+            paddingTop: '24px',
+            marginTop: '30px',
+            borderTop: '1px solid var(--line)',
+          }}>
+            <div>
+              <h2 style={{ fontSize: 'clamp(1.2rem, 3vw, 1.7rem)' }}>
+                AI Style &amp; Body Analysis
+              </h2>
+              <span className="label" style={{ marginTop: '6px' }}>
+                Facial structure + skin-tone fashion engine
+              </span>
+            </div>
+            <span className="label label-accent" style={{ fontSize: '0.72rem' }}>
+              Style-Analysis
             </span>
           </div>
-
-          <h1 className="fade-in stagger-1" style={{
-            fontSize: 'clamp(2.5rem, 6vw, 4rem)',
-            marginBottom: '20px',
-            lineHeight: 1.1,
-          }}>
-            Discover Your
-            <br />
-            <span style={{
-              background: 'var(--gradient-primary)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>Perfect Style</span>
-          </h1>
-
-          <p className="fade-in stagger-2" style={{
-            fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-            color: 'var(--color-text-muted)',
-            maxWidth: '600px',
-            margin: '0 auto 40px',
-            lineHeight: 1.7,
-          }}>
-            Upload your photo and let AI analyze your face shape, skin tone, and body
-            proportions to generate personalized fashion recommendations tailored just for you.
-          </p>
-
-          <div className="fade-in stagger-3" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to={user ? '/analyze' : '/register'} className="btn btn-primary" style={{ padding: '14px 32px', fontSize: '1rem' }}>
-              {user ? '✨ Start Analysis' : '🚀 Get Started Free'}
-            </Link>
-            <a href="#features" className="btn btn-secondary" style={{ padding: '14px 32px', fontSize: '1rem' }}>
-              Learn More ↓
-            </a>
-          </div>
-        </div>
+        </Frame>
       </section>
 
-      {/* ── Features Section ──────────────────────────────────────── */}
-      <section id="features" style={{ padding: '80px 0' }}>
-        <div className="container">
-          <h2 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '12px' }}>
-            How It Works
-          </h2>
-          <p style={{
-            textAlign: 'center',
-            color: 'var(--color-text-muted)',
-            marginBottom: '48px',
-            maxWidth: '500px',
-            margin: '0 auto 48px',
-          }}>
-            Real computer vision and machine learning — no gimmicks, no paid APIs.
-          </p>
+      {/* ── Modules ───────────────────────────────────────────────────── */}
+      <section id="modules" className="container" style={{ padding: '20px 28px 80px' }}>
+        <SectionHead
+          title="Pipeline"
+          sub="Real computer vision and machine learning — no gimmicks, no paid APIs."
+          slug="04 Modules"
+        />
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '24px',
-          }}>
-            {features.map((f, i) => (
-              <div key={i} className="glass-card" style={{
-                padding: '32px 24px',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '16px' }}>{f.icon}</span>
-                <h3 style={{ fontSize: '1.15rem', marginBottom: '10px' }}>{f.title}</h3>
-                <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Process Section ────────────────────────────────────────── */}
-      <section style={{ padding: '80px 0', background: 'var(--color-surface-hover)' }}>
-        <div className="container">
-          <h2 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '48px' }}>
-            Three Simple Steps
-          </h2>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '32px',
-            textAlign: 'center',
-          }}>
-            {[
-              { step: '01', title: 'Upload Photos', desc: 'Upload a face photo and/or full-body photo' },
-              { step: '02', title: 'AI Analysis', desc: 'Our CV pipeline detects your shape, tone & proportions' },
-              { step: '03', title: 'Get Styled', desc: 'Receive personalized recommendations with explanations' },
-            ].map((s, i) => (
-              <div key={i} style={{ padding: '24px' }}>
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'var(--gradient-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 16px',
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '18px',
+        }}>
+          {MODULES.map((m, i) => (
+            <Frame
+              key={m.index}
+              hover
+              className={`fade-in stagger-${i + 1}`}
+              style={{ padding: '26px 22px' }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                marginBottom: '18px',
+              }}>
+                <span style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '1.7rem',
                   fontWeight: 700,
-                  fontSize: '1.1rem',
+                  color: 'var(--accent)',
+                  lineHeight: 1,
                 }}>
-                  {s.step}
-                </div>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '8px' }}>{s.title}</h3>
-                <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>{s.desc}</p>
+                  {m.index}
+                </span>
+                <span className="label">{m.slug}</span>
               </div>
-            ))}
-          </div>
+
+              <h3 style={{
+                fontSize: '1.05rem',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+              }}>
+                {m.title}
+              </h3>
+              <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', lineHeight: 1.65 }}>
+                {m.desc}
+              </p>
+            </Frame>
+          ))}
         </div>
       </section>
 
-      {/* ── CTA Section ────────────────────────────────────────────── */}
-      <section style={{ padding: '80px 0', textAlign: 'center' }}>
-        <div className="container">
-          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
-            Ready to Find Your Style?
+      {/* ── Sequence ──────────────────────────────────────────────────── */}
+      <section className="container" style={{ padding: '0 28px 90px' }}>
+        <SectionHead title="Sequence" slug="03 Steps" />
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: '0',
+        }}>
+          {[
+            { step: '01', title: 'Upload', desc: 'A face photo, a full-body photo, or both. Each is optional.' },
+            { step: '02', title: 'Measure', desc: 'Landmarks, clustering and ratios run server-side, in memory.' },
+            { step: '03', title: 'Style', desc: 'Ranked advice, each item carrying the reasons it was chosen.' },
+          ].map((s, i) => (
+            <div
+              key={s.step}
+              style={{
+                padding: '26px 24px',
+                borderLeft: i === 0 ? '1px solid var(--line)' : 'none',
+                borderRight: '1px solid var(--line)',
+                borderTop: '1px solid var(--line)',
+                borderBottom: '1px solid var(--line)',
+              }}
+            >
+              <span className="label label-accent" style={{ marginBottom: '14px' }}>
+                Step {s.step}
+              </span>
+              <h3 style={{ fontSize: '1.15rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                {s.title}
+              </h3>
+              <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)' }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Close ─────────────────────────────────────────────────────── */}
+      <section className="container" style={{ padding: '0 28px 90px' }}>
+        <Frame style={{ padding: '54px 28px', textAlign: 'center' }}>
+          <span className="label label-accent" style={{ marginBottom: '16px' }}>
+            Free · No subscription
+          </span>
+          <h2 style={{
+            fontSize: 'clamp(1.6rem, 4vw, 2.4rem)',
+            textTransform: 'uppercase',
+            marginBottom: '14px',
+          }}>
+            Run your first scan
           </h2>
-          <p style={{ color: 'var(--color-text-muted)', marginBottom: '32px' }}>
-            Free to use. No subscriptions. Just upload and discover.
+          <p style={{ color: 'var(--text-muted)', marginBottom: '30px', fontSize: '0.92rem' }}>
+            Photos are decoded in memory and never written to disk.
           </p>
-          <Link to={user ? '/analyze' : '/register'} className="btn btn-primary" style={{ padding: '16px 40px', fontSize: '1.1rem' }}>
-            {user ? '✨ Analyze Now' : '🚀 Create Free Account'}
+          <Link to={startTo} className="btn btn-primary" style={{ padding: '15px 36px' }}>
+            {startLabel}
           </Link>
-        </div>
+        </Frame>
       </section>
 
-      {/* ── Footer ─────────────────────────────────────────────────── */}
-      <footer style={{
-        borderTop: '1px solid var(--color-border)',
-        padding: '24px 0',
-        textAlign: 'center',
-        fontSize: '0.85rem',
-        color: 'var(--color-text-dim)',
-      }}>
-        <div className="container">
-          <p>© 2025 StyleSense AI — Built with MediaPipe, OpenCV, Flask & React</p>
+      {/* ── Footer ────────────────────────────────────────────────────── */}
+      <footer style={{ borderTop: '1px solid var(--line)', padding: '22px 0' }}>
+        <div className="container" style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          flexWrap: 'wrap',
+        }}>
+          <span className="label">
+            StyleSense AI — MediaPipe · OpenCV · Flask · React
+          </span>
+          <span className="label">Style-Analysis</span>
         </div>
       </footer>
     </div>

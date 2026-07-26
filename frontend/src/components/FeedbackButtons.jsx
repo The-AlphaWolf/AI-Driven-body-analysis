@@ -3,7 +3,7 @@ import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 
 /**
- * Like / dislike control for a single recommendation.
+ * Keep / reject control for a single recommendation.
  *
  * Updates optimistically — the verdict is a preference, so a failed write is
  * worth a toast but not worth blocking the card behind a spinner. On failure
@@ -31,7 +31,7 @@ export default function FeedbackButtons({ analysisId, category, recommendation, 
     }
   };
 
-  const button = (kind, icon, label) => {
+  const button = (kind, glyph, label, activeColor) => {
     const active = verdict === kind;
     return (
       <button
@@ -42,27 +42,30 @@ export default function FeedbackButtons({ analysisId, category, recommendation, 
         aria-label={label}
         title={label}
         style={{
-          background: active ? 'var(--color-surface-hover, rgba(255,255,255,0.08))' : 'transparent',
-          border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
-          borderRadius: '999px',
+          width: '26px',
+          height: '26px',
+          display: 'grid',
+          placeItems: 'center',
+          background: active ? `color-mix(in srgb, ${activeColor} 14%, transparent)` : 'transparent',
+          border: `1px solid ${active ? activeColor : 'var(--line-mid)'}`,
+          color: active ? activeColor : 'var(--text-dim)',
           cursor: pending ? 'wait' : 'pointer',
-          padding: '4px 10px',
-          fontSize: '0.85rem',
-          lineHeight: 1.2,
-          opacity: pending ? 0.6 : 1,
-          filter: active ? 'none' : 'grayscale(1)',
-          transition: 'border-color 0.15s, filter 0.15s',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.72rem',
+          lineHeight: 1,
+          opacity: pending ? 0.5 : 1,
+          transition: 'border-color 0.15s ease, color 0.15s ease, background 0.15s ease',
         }}
       >
-        {icon}
+        {glyph}
       </button>
     );
   };
 
   return (
-    <div style={{ display: 'flex', gap: '6px' }}>
-      {button('like', '❤️', 'Save this recommendation')}
-      {button('dislike', '👎', 'Not for me')}
+    <div style={{ display: 'flex', gap: '5px', flexShrink: 0 }}>
+      {button('like', '+', 'Keep this recommendation', 'var(--ok)')}
+      {button('dislike', '−', 'Not for me', 'var(--danger)')}
     </div>
   );
 }

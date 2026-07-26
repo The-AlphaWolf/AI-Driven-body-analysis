@@ -7,12 +7,12 @@
 
 export function SkeletonCard({ lines = 3, height = null }) {
   return (
-    <div className="glass-card" style={{ padding: '20px' }} aria-hidden="true">
+    <div className="frame" style={{ padding: '20px' }} aria-hidden="true">
       {height ? (
         <div className="skeleton" style={{ height }} />
       ) : (
         <>
-          <div className="skeleton skeleton-line" style={{ width: '40%', height: '10px' }} />
+          <div className="skeleton skeleton-line" style={{ width: '38%', height: '8px' }} />
           {Array.from({ length: lines }).map((_, i) => (
             <div
               key={i}
@@ -26,13 +26,13 @@ export function SkeletonCard({ lines = 3, height = null }) {
   );
 }
 
-export function SkeletonGrid({ count = 6, lines = 3, minWidth = '280px' }) {
+export function SkeletonGrid({ count = 6, lines = 3, minWidth = '290px' }) {
   return (
     <div
       style={{
         display: 'grid',
         gridTemplateColumns: `repeat(auto-fill, minmax(${minWidth}, 1fr))`,
-        gap: '20px',
+        gap: '16px',
       }}
       role="status"
       aria-label="Loading"
@@ -46,24 +46,22 @@ export function SkeletonGrid({ count = 6, lines = 3, minWidth = '280px' }) {
 
 export function SkeletonResults() {
   return (
-    <div className="container" style={{ padding: '48px 24px', maxWidth: '1000px' }} role="status" aria-label="Loading results">
-      <div style={{ maxWidth: '380px', margin: '0 auto 40px' }}>
-        <div className="skeleton skeleton-line" style={{ height: '28px', marginBottom: '12px' }} />
-        <div className="skeleton skeleton-line" style={{ width: '55%', margin: '0 auto' }} />
+    <div
+      className="container"
+      style={{ padding: '48px 28px', maxWidth: '1040px' }}
+      role="status"
+      aria-label="Loading results"
+    >
+      <div style={{ maxWidth: '300px', marginBottom: '36px' }}>
+        <div className="skeleton skeleton-line" style={{ height: '26px', marginBottom: '12px' }} />
+        <div className="skeleton skeleton-line" style={{ width: '55%' }} />
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-        gap: '20px',
-        marginBottom: '48px',
-      }}>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <SkeletonCard key={i} height="120px" />
-        ))}
+      <div style={{ marginBottom: '40px' }}>
+        <SkeletonCard height="260px" />
       </div>
 
-      <SkeletonGrid count={6} lines={4} minWidth="260px" />
+      <SkeletonGrid count={6} lines={4} minWidth="280px" />
     </div>
   );
 }

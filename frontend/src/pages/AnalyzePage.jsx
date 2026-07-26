@@ -2,7 +2,15 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import PhotoUpload from '../components/PhotoUpload';
+import { Frame } from '../components/Hud';
 import api from '../services/api';
+
+const TIPS = [
+  'Even lighting — avoid harsh shadows and backlighting',
+  'Face the camera directly, head level',
+  'Full-body shots: stand naturally, arms slightly away from the body',
+  'A plain background helps pose estimation find your outline',
+];
 
 export default function AnalyzePage() {
   const [faceFile, setFaceFile] = useState(null);
@@ -15,97 +23,127 @@ export default function AnalyzePage() {
 
   const handleAnalyze = async () => {
     if (!faceFile && !bodyFile) {
-      addToast('Please upload at least one photo', 'error');
+      addToast('Upload at least one photo', 'error');
       return;
     }
 
     setLoading(true);
     try {
       const data = await api.analyze(faceFile, bodyFile);
-      addToast('Analysis complete!', 'success');
+      addToast('Analysis complete', 'success');
       navigate(`/results/${data.analysis.id}`, { state: { analysis: data.analysis } });
     } catch (err) {
-      addToast(err.message || 'Analysis failed. Please try again.', 'error');
+      addToast(err.message || 'Analysis failed. Try again.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container" style={{ padding: '48px 24px', maxWidth: '800px' }}>
-      <div className="fade-in" style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '12px' }}>
-          <span style={{
-            background: 'var(--gradient-primary)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>✨ New Analysis</span>
-        </h1>
-        <p style={{ color: 'var(--color-text-muted)', maxWidth: '500px', margin: '0 auto' }}>
-          Upload a face photo for shape & skin tone analysis, a full-body photo for body proportion analysis, or both for complete recommendations.
-        </p>
+    <div className="container" style={{ padding: '48px 28px 80px', maxWidth: '880px' }}>
+      <div className="section-head fade-in">
+        <div>
+          <span className="label label-accent" style={{ marginBottom: '10px' }}>Input</span>
+          <h1 style={{ fontSize: 'clamp(1.7rem, 4vw, 2.4rem)', textTransform: 'uppercase' }}>
+            New Scan
+          </h1>
+          <p className="mono" style={{ marginTop: '8px' }}>
+            JPEG · PNG · WEBP — MAX 10MB — DECODED IN MEMORY, NEVER WRITTEN TO DISK
+          </p>
+        </div>
+        <span className="label">02 Sources</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '18px',
+        marginBottom: '24px',
+      }}>
         <div className="fade-in stagger-1">
-          <h3 style={{ fontSize: '1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            👤 Face Photo
-            <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>Optional</span>
-          </h3>
+          <div style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            marginBottom: '10px',
+          }}>
+            <span className="label">Source 01 — Face</span>
+            <span className="label">Optional</span>
+          </div>
           <PhotoUpload
-            label="Upload Face Photo"
-            description="Clear, front-facing photo with good lighting"
+            label="Face photo"
+            description="Front-facing, well lit"
             onFileSelect={setFaceFile}
           />
         </div>
 
         <div className="fade-in stagger-2">
-          <h3 style={{ fontSize: '1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🧍 Full Body Photo
-            <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>Optional</span>
-          </h3>
+          <div style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            marginBottom: '10px',
+          }}>
+            <span className="label">Source 02 — Body</span>
+            <span className="label">Optional</span>
+          </div>
           <PhotoUpload
-            label="Upload Body Photo"
-            description="Full-body, front-facing, standing pose"
+            label="Full-body photo"
+            description="Standing, front-facing"
             onFileSelect={setBodyFile}
           />
         </div>
       </div>
 
-      {/* Tips */}
-      <div className="glass-card fade-in stagger-3" style={{ padding: '20px 24px', marginBottom: '32px' }}>
-        <h4 style={{ fontSize: '0.9rem', marginBottom: '10px', color: 'var(--color-primary-light)' }}>📸 Tips for Best Results</h4>
-        <ul style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', listStyle: 'none', display: 'grid', gap: '6px' }}>
-          <li>• Good, even lighting — avoid harsh shadows or backlighting</li>
-          <li>• Face camera directly — avoid tilting or turning your head</li>
-          <li>• For body photo — stand naturally with arms slightly away from body</li>
-          <li>• Plain background works best for body proportion detection</li>
+      <Frame
+        className="fade-in stagger-3"
+        label="Capture guidance"
+        slug="04 Notes"
+        style={{ marginBottom: '32px' }}
+      >
+        <ul style={{ listStyle: 'none', display: 'grid', gap: '9px' }}>
+          {TIPS.map((tip, i) => (
+            <li
+              key={i}
+              style={{
+                display: 'flex',
+                gap: '12px',
+                fontSize: '0.85rem',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <span className="mono" style={{ color: 'var(--accent)', flexShrink: 0 }}>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              {tip}
+            </li>
+          ))}
         </ul>
-      </div>
+      </Frame>
 
-      {/* Submit Button */}
       <div className="fade-in stagger-4" style={{ textAlign: 'center' }}>
         <button
+          type="button"
           className="btn btn-primary"
           onClick={handleAnalyze}
           disabled={!canSubmit}
-          style={{ padding: '16px 48px', fontSize: '1.05rem' }}
+          style={{ padding: '16px 40px', fontSize: '0.8rem' }}
         >
           {loading ? (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }} />
-              Analyzing... This may take a moment
+            <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span className="spinner" style={{ width: '16px', height: '16px' }} />
+              Analysing…
             </span>
-          ) : (
-            '🔍 Analyze My Style'
-          )}
+          ) : 'Run Analysis'}
         </button>
 
-        {!faceFile && !bodyFile && (
-          <p style={{ marginTop: '12px', fontSize: '0.85rem', color: 'var(--color-text-dim)' }}>
-            Upload at least one photo to begin
-          </p>
-        )}
+        <p className="mono" style={{ marginTop: '14px' }}>
+          {loading
+            ? 'LANDMARKS · CLUSTERING · SCORING — THIS TAKES A MOMENT'
+            : (!faceFile && !bodyFile)
+              ? 'AWAITING AT LEAST ONE SOURCE'
+              : 'READY'}
+        </p>
       </div>
     </div>
   );

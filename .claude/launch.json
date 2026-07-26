@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev", "--", "--port", "5173"],
       "cwd": "frontend",
       "port": 5173
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "flask", "--app", "app:create_app", "run", "--port", "5000"],
+      "cwd": "backend",
+      "port": 5000
     }
   ]
 }

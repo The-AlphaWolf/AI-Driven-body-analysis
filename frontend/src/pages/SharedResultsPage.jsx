@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import AnalysisReport from '../components/AnalysisReport';
 import { SkeletonResults } from '../components/Skeleton';
+import { Frame } from '../components/Hud';
 import api from '../services/api';
 
 /**
@@ -40,44 +41,45 @@ export default function SharedResultsPage() {
 
   if (error || !analysis) {
     return (
-      <div className="container" style={{ textAlign: 'center', padding: '80px 24px' }}>
-        <span style={{ fontSize: '3rem', display: 'block', marginBottom: '16px' }}>🔗</span>
-        <h2 style={{ marginBottom: '8px' }}>Link unavailable</h2>
-        <p style={{ color: 'var(--color-text-muted)', marginBottom: '24px' }}>
-          {error || 'This share link is not valid or has been revoked.'}
-        </p>
-        <Link to="/" className="btn btn-primary">Try StyleSense AI</Link>
+      <div className="container" style={{ padding: '80px 28px', maxWidth: '620px' }}>
+        <Frame style={{ padding: '48px 28px', textAlign: 'center' }}>
+          <span className="label" style={{ color: 'var(--danger)', marginBottom: '14px' }}>
+            Link Revoked
+          </span>
+          <h2 style={{ textTransform: 'uppercase', marginBottom: '10px' }}>Unavailable</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '26px' }}>
+            {error || 'This share link is not valid or has been revoked.'}
+          </p>
+          <Link to="/" className="btn btn-primary">Try StyleSense AI</Link>
+        </Frame>
       </div>
     );
   }
 
   return (
-    <div className="container" style={{ padding: '48px 24px', maxWidth: '1000px' }}>
-      <div className="fade-in" style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <span className="badge badge-primary" style={{ marginBottom: '12px', display: 'inline-block' }}>
-          Shared style report
-        </span>
-        <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
-          A Style <span style={{
-            background: 'var(--gradient-primary)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>Analysis</span>
-        </h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-          {new Date(analysis.created_at).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric',
+    <div className="container" style={{ padding: '48px 28px 80px', maxWidth: '1040px' }}>
+      <div className="section-head fade-in">
+        <div>
+          <span className="label label-accent" style={{ marginBottom: '10px' }}>Shared Report</span>
+          <h1 style={{ fontSize: 'clamp(1.7rem, 4vw, 2.4rem)', textTransform: 'uppercase' }}>
+            Style Analysis
+          </h1>
+          <p className="mono" style={{ marginTop: '8px' }}>READ-ONLY — NO PHOTO INCLUDED</p>
+        </div>
+        <span className="label">
+          {new Date(analysis.created_at).toLocaleDateString('en-GB', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
           })}
-        </p>
+        </span>
       </div>
 
       <AnalysisReport analysis={analysis} />
 
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '40px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '40px', flexWrap: 'wrap' }}>
         <button type="button" onClick={download} disabled={downloading} className="btn btn-secondary">
-          {downloading ? 'Preparing...' : '📄 Download PDF'}
+          {downloading ? 'Preparing…' : 'Download PDF'}
         </button>
-        <Link to="/register" className="btn btn-primary">✨ Analyze your own photo</Link>
+        <Link to="/register" className="btn btn-primary">Analyse Your Own Photo</Link>
       </div>
     </div>
   );
