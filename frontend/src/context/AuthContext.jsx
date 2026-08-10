@@ -13,9 +13,14 @@ export function AuthProvider({ children }) {
     if (token) {
       api.getMe()
         .then((data) => setUser(data.user))
-        .catch(() => {
-          api.removeToken();
-          setUser(null);
+        .catch((err) => {
+          // Only an actual 401 means the token is invalid — a network
+          // hiccup or a Render cold-start timeout is not proof of that,
+          // and wiping a good token on those just logs people out at random.
+          if (err.status === 401) {
+            api.removeToken();
+            setUser(null);
+          }
         })
         .finally(() => setLoading(false));
     } else {
@@ -40,8 +45,12 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  // The shared demo login is read-only. This only drives the interface —
+  // every write is refused by the API regardless of what the client believes.
+  const isDemo = Boolean(user?.is_demo);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isDemo, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
